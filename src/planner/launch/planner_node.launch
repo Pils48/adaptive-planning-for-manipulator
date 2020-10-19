@@ -1,0 +1,7 @@
+<launch>
+
+  <group ns="planner_node_group">
+    <node pkg="planner" name="planner_node" type="planner_node"/>
+  </group>
+
+</launch>
