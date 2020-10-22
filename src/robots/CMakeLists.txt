@@ -1,32 +1,19 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(planner)
+project(robots)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++17 -I/usr/include/python2.7 -lpython)
+# add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  interactive_markers
-  moveit_core
-  moveit_ros_planning
-  moveit_ros_planning_interface
-  roscpp
-  std_msgs
-  rviz_visual_tools
-  geometric_shapes
-  tf2_ros
-  tf2_eigen
-  tf2_geometry_msgs
+  urdf
 )
 
 ## System dependencies are found with CMake's conventions
-find_package(Eigen3 REQUIRED)
-find_package(Boost REQUIRED system filesystem date_time thread)
+# find_package(Boost REQUIRED COMPONENTS system)
 
-## Matplot dependencies
-find_package(PythonLibs 2.7)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -81,7 +68,7 @@ find_package(PythonLibs 2.7)
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   std_msgs
+#   std_msgs  # Or other packages containing msgs
 # )
 
 ################################################
@@ -114,16 +101,10 @@ find_package(PythonLibs 2.7)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES planner
-  CATKIN_DEPENDS
-    moveit_core
-    moveit_visual_tools
-    moveit_ros_planning_interface
-    interactive_markers
-    tf2_geometry_msgs
-  DEPENDS
-    EIGEN3
+#  INCLUDE_DIRS include
+#  LIBRARIES robots
+#  CATKIN_DEPENDS urdf
+#  DEPENDS system_lib
 )
 
 ###########
@@ -133,13 +114,13 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-  include/planner
+# include
   ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/planner.cpp
+#   src/${PROJECT_NAME}/robots.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -150,7 +131,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_node src/planner_node.cpp src/ConfigurationSpace.cpp)
+# add_executable(${PROJECT_NAME}_node src/robots_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -162,13 +143,10 @@ add_executable(${PROJECT_NAME}_node src/planner_node.cpp src/ConfigurationSpace.
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-## Specify libraries and directories to link a library or executable target against
-target_include_directories(${PROJECT_NAME}_node PRIVATE ${PYTHON_INCLUDE_DIRS})
-
-target_link_libraries(${PROJECT_NAME}_node
-   ${catkin_LIBRARIES}
-   ${PYTHON_LIBRARIES}
- )
+## Specify libraries to link a library or executable target against
+# target_link_libraries(${PROJECT_NAME}_node
+#   ${catkin_LIBRARIES}
+# )
 
 #############
 ## Install ##
@@ -217,7 +195,7 @@ target_link_libraries(${PROJECT_NAME}_node
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_planner.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_robots.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
