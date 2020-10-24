@@ -1,7 +1,7 @@
 <launch>
-    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find robots)primitive_manipulator/primitive_manipulator.xacro'"/>
+    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find robots)/2_dof_robot/configs/2_dof_robot.xacro'"/>
     
-    <param name="robot_description_semantic" textfile="$(find robots)/primitive_manipulator/primitive_manipulator_srdf.xacro" />
+    <param name="robot_description_semantic" textfile="$(find robots)/2_dof_robot/configs/2_dof_robot_srdf.xacro" />
 
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
     <node name="rviz" pkg="rviz" type="rviz"/>
@@ -11,7 +11,7 @@
     </node>
 
     <group ns="$robot_description_kinematics">
-        <rosparam command="load" file="$(find robots)/primitive_manipulator/kinematics.yaml"/>
+        <rosparam command="load" file="$(find robots)/2_dof_robot/configs/kinematics.yaml"/>
     </group>
 
 </launch>

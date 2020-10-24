@@ -3,7 +3,7 @@
 
 //Internal
 #include "PlannerUtils.h"
-#include "matplotlibcpp.h"
+#include "Matplotlibcpp.h"
 
 
 namespace plt = matplotlibcpp;
