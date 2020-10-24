@@ -1,7 +1,12 @@
 <launch>
+  <include file="$(find robots)/primitive_manipulator/visualization.launch"/>
 
-  <group ns="planner_node_group">
-    <node pkg="planner" name="planner_node" type="planner_node"/>
-  </group>
+  <node name="planner_node" 
+        pkg="planner" 
+        type="planner_node"
+        respawn="false" output="screen">
+    <rosparam command="load"
+          file="$(find robots)/primitive_manipulator/kinematics.yaml"/>
+  </node>
 
 </launch>
