@@ -14,7 +14,7 @@ public:
     ConfigurationSpace
     (
         Point trivial_collision,
-        moveit::core::RobotModel robot_model
+        moveit::core::RobotModelPtr robot_model
     ); //testing constructor
 
     void showPlot();
@@ -25,7 +25,7 @@ private:
 
     plt::Plot cspace_plot;
     Point _trivial_collision;
-    moveit::core::RobotModel _robot_model;
+    moveit::core::RobotModelPtr _robot_model;
 
     //vector<shapes> _collision_objects
 };
