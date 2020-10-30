@@ -2,7 +2,7 @@
 
 struct Point;
 
-class TrivialIK : Solver
+class TrivialIK : public Solver
 {
 public:
     TrivialIK() = default;

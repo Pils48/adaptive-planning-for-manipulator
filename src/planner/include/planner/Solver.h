@@ -2,9 +2,12 @@
 
 #include <moveit/robot_model/robot_model.h>
 
+#include <Eigen/Core>
+
 #include <vector>
 #include <algorithm>
 #include <memory>
+#include <cmath>
 
 class Solver
 {
