@@ -1,3 +1,5 @@
+#include <tf/tf.h>
+
 //moveit
 #include <moveit/robot_model_loader/robot_model_loader.h>
 
@@ -22,7 +24,7 @@ int main(int argc, char *argv[])
     robot_model::RobotModelPtr kinematic_model = robot_model_loader.getModel();
     ROS_INFO("Model %s loaded", kinematic_model->getName().c_str());
     ROS_INFO("Building configuration space...");
-    ConfigurationSpace c_space(Point{1, 2}, kinematic_model);
+    ConfigurationSpace c_space(tf::Vector3(1, 2, 3), kinematic_model);
     while(ros::ok())
     {
         /*NOP*/

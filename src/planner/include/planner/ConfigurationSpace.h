@@ -1,3 +1,5 @@
+#include <tf/tf.h>
+
 //moveit
 #include <moveit/robot_model/robot_model.h>
 
@@ -5,6 +7,7 @@
 #include "PlannerUtils.h"
 #include "Matplotlibcpp.h"
 
+#define STANDARD_DISCRETIZATION 0.01 //1cm
 
 namespace plt = matplotlibcpp;
 
@@ -13,7 +16,7 @@ class ConfigurationSpace
 public:
     ConfigurationSpace
     (
-        Point trivial_collision,
+        tf::Vector3 trivial_collision,
         moveit::core::RobotModelPtr robot_model
     ); //testing constructor
 
@@ -21,10 +24,10 @@ public:
 
     //ConfigurationSpace(RobotModel, vector<shapes>);
 private:
-    void addCollision(const Point &trivial_collision);
+    void addCollision(const tf::Vector3 &trivial_collision);
 
     plt::Plot cspace_plot;
-    Point _trivial_collision;
+    tf::Vector3 _trivial_collision;
     moveit::core::RobotModelPtr _robot_model;
 
     //vector<shapes> _collision_objects

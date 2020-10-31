@@ -15,13 +15,18 @@ class Solver
 public:
     virtual Solutions solveIK(
         const tf::Vector3 &pose, 
-        const robot_model::JointModelGroup &joint_model_group
+        const std::vector<double> &links_length
+    ) = 0;
+
+    virtual bool isJointModelGroupValid(
+        const moveit::core::JointModelGroup &joint_model_group
+    ) = 0;
+
+    virtual std::vector<moveit::core::LinkModel*> getSimplifiedLinksChain(
+        const moveit::core::JointModelGroup &joint_model_group
     ) = 0;
 };
 
 using SolverPtr = std::shared_ptr<Solver>;
 
-SolverPtr createSolver(
-    const tf::Vector3 &pose,
-    const robot_model::JointModelGroup &joint_model_group
-);
+SolverPtr createSolver(const robot_model::JointModelGroup &joint_model_group);
