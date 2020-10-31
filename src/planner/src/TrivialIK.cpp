@@ -26,7 +26,7 @@ double getLinkLength(const LinkModel *link_model)
     return extents.z() / 1000;
 }
 
-vector<double> TrivialIK::solveIK(
+Solutions TrivialIK::solveIK(
     const tf::Vector3 &trivial_collision, 
     const JointModelGroup &joint_model_group
     )
@@ -52,16 +52,33 @@ vector<double> TrivialIK::solveIK(
     //Hardcode
     links_length.pop_back();
 
-    // vector<double> joints;
-    ROS_INFO("atan: %f", atan(1)); 
+    Solutions solutions;
+    ROS_DEBUG("(pow(trivial_collision.getX(), 2): %f", (pow(trivial_collision.getX(), 2)));
+    ROS_DEBUG("(pow(trivial_collision.getY(), 2): %f", (pow(trivial_collision.getY(), 2)));
+    ROS_DEBUG("pow(links_length.front(), 2): %f", pow(links_length.front(), 2));
+    ROS_DEBUG("pow(links_length.back(), 2): %f", pow(links_length.back(), 2));
+    ROS_DEBUG("under acos: %f", ((pow(trivial_collision.getX(), 2) + pow(trivial_collision.getY(), 2) 
+                        - pow(links_length.front(), 2) - pow(links_length.back(), 2)) / 
+                        (2 * links_length.front() * links_length.back())));
+                        
     auto joint_2 = acos((pow(trivial_collision.getX(), 2) + pow(trivial_collision.getY(), 2) 
                         - pow(links_length.front(), 2) - pow(links_length.back(), 2)) / 
                         (2 * links_length.front() * links_length.back()));
     auto joint_1 = atan(trivial_collision.getY() / trivial_collision.getX()) - 
                     atan(links_length.back() * sin(joint_2) / (links_length.front() + links_length.back() * cos(joint_2)));
-    ROS_INFO("Joint 1: %f", joint_1);
-    ROS_INFO("Joint 2: %f", joint_2);
-    return {};
+    ROS_INFO("Joint 1: %f", (joint_1 - M_PI / 2) * 180 / M_PI);
+    ROS_INFO("Joint 2: %f", joint_2 * 180 / M_PI);
+    solutions.push_back(vector<double>{joint_1, joint_2});
+
+    joint_2 = -acos((pow(trivial_collision.getX(), 2) + pow(trivial_collision.getY(), 2) 
+                        - pow(links_length.front(), 2) - pow(links_length.back(), 2)) / 
+                        (2 * links_length.front() * links_length.back()));
+    joint_1 = atan(trivial_collision.getY() / trivial_collision.getX()) - 
+                    atan(links_length.back() * sin(joint_2) / (links_length.front() + links_length.back() * cos(joint_2)));
+    ROS_INFO("Joint 1: %f", (joint_1 - M_PI / 2) * 180 / M_PI);
+    ROS_INFO("Joint 2: %f", joint_2 * 180 / M_PI);
+    solutions.push_back(vector<double>{joint_1, joint_2});
+    return solutions;
 
 }
 

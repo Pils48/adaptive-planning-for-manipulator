@@ -10,8 +10,8 @@ SolverPtr createSolver(
 {
     if(joint_model_group.getName() == PRIMITIVE_MANIPULATOR)
     {   
-        std::shared_ptr<Solver> trivial_solver(new TrivialIK);
-        return trivial_solver; //mb malformed memory????
+        SolverPtr trivial_solver(new TrivialIK);
+        return trivial_solver;
     }
     else if(joint_model_group.getName() == ROBOTIS_MANIPULATOR)
     {

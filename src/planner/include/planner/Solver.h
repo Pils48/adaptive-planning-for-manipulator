@@ -9,10 +9,11 @@
 #include <memory>
 #include <cmath>
 
+using Solutions = std::vector<std::vector<double>>;
 class Solver
 {
 public:
-    virtual std::vector<double> solveIK(
+    virtual Solutions solveIK(
         const tf::Vector3 &pose, 
         const robot_model::JointModelGroup &joint_model_group
     ) = 0;
