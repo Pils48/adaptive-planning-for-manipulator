@@ -7,7 +7,7 @@
 #include "PlannerUtils.h"
 #include "Matplotlibcpp.h"
 
-#define STANDARD_DISCRETIZATION 0.01 //1cm
+#define STANDARD_DISCRETIZATION 0.0001 //1cm
 
 namespace plt = matplotlibcpp;
 

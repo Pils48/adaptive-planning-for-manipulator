@@ -9,7 +9,7 @@ public:
     
     bool isJointModelGroupValid(const robot_model::JointModelGroup &joint_model_group);
 
-    std::vector<moveit::core::LinkModel*> getSimplifiedLinksChain(
+    std::vector<const moveit::core::LinkModel*> getSimplifiedLinksChain(
         const moveit::core::JointModelGroup &joint_model_group
     );
 

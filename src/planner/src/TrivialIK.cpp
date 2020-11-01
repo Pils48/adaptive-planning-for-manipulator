@@ -31,17 +31,18 @@ bool TrivialIK::isJointModelGroupValid(const moveit::core::JointModelGroup &join
     }
 }
 
-std::vector<moveit::core::LinkModel*> TrivialIK::getSimplifiedLinksChain(
+std::vector<const moveit::core::LinkModel*> TrivialIK::getSimplifiedLinksChain(
     const moveit::core::JointModelGroup &joint_model_group
 )
 {
     const auto joints_models = joint_model_group.getActiveJointModels();
     vector<const LinkModel*> chain;
-    for (const auto* joint_model : joints_models)
+    for (const auto *joint_model : joints_models)
     {
         ROS_INFO("LINK MODEL: %s", joint_model->getChildLinkModel()->getName().c_str());
         chain.emplace_back(joint_model->getChildLinkModel());
     }
+    return chain;
 }
 
 Solutions TrivialIK::solveIK(
@@ -54,22 +55,29 @@ Solutions TrivialIK::solveIK(
         throw runtime_error("Links number for trivial solver doesn't equal 2!");
     }
 
-    const double length_1 = links_length.back();
-    const double length_2 = links_length.front();
+    const double length_1 = links_length.front();
+    const double length_2 = links_length.back();
     Solutions solutions;
     //First solution
     auto joint_2 = acos((sqr(pose.getX()) + sqr(pose.getY()) - sqr(length_1) - sqr(length_2)) / (2 * length_1 * length_2));
-    auto joint_1 = atan(pose.getY() / pose.getX()) - atan(links_length.back() * sin(joint_2) / 
-                    (links_length.front() + links_length.back() * cos(joint_2)));
-    ROS_INFO("First solution:\nJoint 1: %f", (joint_1 - M_PI / 2) * 180 / M_PI);
+    auto joint_1 = atan(pose.getY() / pose.getX()) - atan(length_2 * sin(joint_2) / (length_1 + length_2 * cos(joint_2)));
+    ROS_INFO("First solution:");
+    ROS_INFO("Joint 1: %f", (joint_1 - M_PI / 2) * 180 / M_PI);
     ROS_INFO("Joint 2: %f", joint_2 * 180 / M_PI);
-    solutions.push_back(vector<double>{joint_1, joint_2});
+    if (joint_1 && joint_2)
+    {
+        solutions.push_back(vector<double>{joint_1, joint_2});
+    }
 
     //Second solution
-    joint_2 = -acos((sqr(pose.getX()) + sqr(pose.getY()) - sqr(length_1) - sqr(length_2)) / (2 * links_length.front() * links_length.back()));
-    joint_1 = atan(pose.getY() / pose.getX()) - atan(links_length.back() * sin(joint_2) / 
-                (links_length.front() + links_length.back() * cos(joint_2)));
-    ROS_INFO("Second solution:\nJoint 1: %f", (joint_1 - M_PI / 2) * 180 / M_PI);
+    joint_2 = -acos((sqr(pose.getX()) + sqr(pose.getY()) - sqr(length_1) - sqr(length_2)) / (2 * length_1 * length_2));
+    joint_1 = atan(pose.getY() / pose.getX()) - atan(links_length.back() * sin(joint_2) / (length_1 + length_2 * cos(joint_2)));
+    if (joint_1 && joint_2)
+    {
+        solutions.push_back(vector<double>{joint_1, joint_2});
+    }
+    ROS_INFO("Second solution:");
+    ROS_INFO("Joint 1: %f", (joint_1 - M_PI / 2) * 180 / M_PI);
     ROS_INFO("Joint 2: %f", joint_2 * 180 / M_PI);
     solutions.push_back(vector<double>{joint_1, joint_2});
     return solutions;

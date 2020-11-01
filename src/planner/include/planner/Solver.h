@@ -22,7 +22,7 @@ public:
         const moveit::core::JointModelGroup &joint_model_group
     ) = 0;
 
-    virtual std::vector<moveit::core::LinkModel*> getSimplifiedLinksChain(
+    virtual std::vector<const moveit::core::LinkModel*> getSimplifiedLinksChain(
         const moveit::core::JointModelGroup &joint_model_group
     ) = 0;
 };
