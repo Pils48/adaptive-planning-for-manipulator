@@ -14,23 +14,30 @@ using namespace moveit::core;
 
 ConfigurationSpace::ConfigurationSpace
 (
-    tf::Vector3 trivial_collision,
+    std::vector<tf::Vector3> trivial_collisions,
     moveit::core::RobotModelPtr robot_model
 )
-    : _trivial_collision(trivial_collision)
-    , _robot_model(robot_model) 
+    : _trivial_collisions(trivial_collisions)
+    , _robot_model(robot_model)
+    , _cspace_plot("test") 
 {
-    addCollision(trivial_collision);
+    addCollision(trivial_collisions);
 }
 
 void ConfigurationSpace::showPlot()
 {
 
 }
- 
-//save png
-void ConfigurationSpace::addCollision(const tf::Vector3 &trivial_collision)
+
+void ConfigurationSpace::addCollision(const std::vector<tf::Vector3> &trivial_collisions)
 {
+    //Setting up graphs params
+    plt::title("Image of the obstacle");
+    plt::xlim(-M_PI_2, M_PI);
+    plt::ylim(-M_PI, M_PI);
+    plt::grid(true);
+
+    //Setting up solver params
     robot_state::RobotStatePtr kinematic_state(new robot_state::RobotState(_robot_model));
     auto joint_model_group = kinematic_state->getJointModelGroup("manipulator");
 
@@ -40,65 +47,48 @@ void ConfigurationSpace::addCollision(const tf::Vector3 &trivial_collision)
     transform(chain.begin(), chain.end(), back_inserter(links_length), &getLinkLength);
     // double total_length = accumulate(links_length.begin(), links_length.end(), 0);
     double total_length = links_length.front() + links_length.back();
-    // ROS_INFO("total_length: %f", total_length);
-    vector<double> x, y;
-    for (size_t i = 0; i < total_length / STANDARD_DISCRETIZATION; ++i)
+    for (const auto &link_length : links_length)
     {
-        if (i < links_length.front() / STANDARD_DISCRETIZATION)
-        {
-            auto joints = solver->solveIK(tf::Vector3(0.15, 0.15, 1), 
-                        {links_length.front(), links_length.back() - i * STANDARD_DISCRETIZATION});
-            for (const auto &solution : joints)
-            {
-                x.push_back(solution[0]);
-                y.push_back(solution[1]);
-            }
-        }
-        else
-        {
-            auto joints = solver->solveIK(tf::Vector3(0.15, 0.15, 1), 
-                        {links_length.front() - i * STANDARD_DISCRETIZATION + links_length.back(), 0});
-            for (const auto &solution : joints)
-            {
-                x.push_back(solution[0]);
-                y.push_back(solution[1]);
-            }
-        }
+        ROS_INFO("link_length: %f", link_length);
     }
-    plt::ion()
-    plt::figure();
-    plt::subplot()
-    // plt::grid(true);
-    // plt::scatter(x, y);
-    // // plt::show();
-    // x.push_back(10);
-    // y.push_back(10);
-    // plt::scatter(x, y);
-    // plt::show();
-    // int n = 1000;
-    // std::vector<double> x_e, y_e, z_e;
-    // for(int i=0; i<n; i++) {
-	// 	x_e.push_back(i*i);
-	// 	y_e.push_back(sin(2*M_PI*i/360.0));
-	// 	z_e.push_back(log(i));
-
-	// 	if (i % 2 == 0) {
-	// 		// Clear previous plot
-	// 		plt::clf();
-	// 		// Plot line from given x and y data. Color is selected automatically.
-	// 		plt::scatter(x_e, y_e);
-	// 		// Plot a line whose name will show up as "log(x)" in the legend.
-	// 		plt::named_plot("log(x)", x_e, z_e);
-
-	// 		// Set x-axis to interval [0,1000000]
-	// 		plt::xlim(0, n*n);
-
-	// 		// Add graph title
-	// 		plt::title("Sample figure");
-	// 		// Enable legend.
-	// 		// plt::legend();
-	// 		// Display plot continuously
-	// 		plt::cla;
-	// 	}
-	// }
+    vector<double> x_front, y_front, x_back, y_back; 
+    for (size_t idx = 0; idx < trivial_collisions.size(); ++idx)
+    {
+        for (size_t i = 0; i < total_length / STANDARD_DISCRETIZATION; ++i)
+        {
+            if (i < links_length.back() / STANDARD_DISCRETIZATION)
+            {
+                auto joints = solver->solveIK(trivial_collisions[idx], 
+                        {links_length.front(), links_length.back() - i * STANDARD_DISCRETIZATION});
+                if (joints.size() == 2)
+                {
+                    x_front.emplace_back(joints.front()[0]);
+                    y_front.emplace_back(joints.front()[1]);
+                    x_back.emplace_back(joints.back()[0]);
+                    y_back.emplace_back(joints.back()[1]);
+                }
+            }
+            else
+            {
+                // auto joints = solver->solveIK(tf::Vector3(0.15, 0.15, 1), 
+                //             {links_length.front() - i * STANDARD_DISCRETIZATION + links_length.back(), 0});
+                // for (const auto &solution : joints)
+                // {
+                //     x.push_back(solution[0]);
+                //     y.push_back(solution[1]);
+                // }
+            }
+        }
+        reverse(x_back.begin(), x_back.end());
+        reverse(y_back.begin(), y_back.end());
+        x_front.insert(x_front.end(), x_back.begin(), x_back.end());
+        y_front.insert(y_front.end(), y_back.begin(), y_back.end());
+        plt::plot(x_front, y_front, std::map<std::string, 
+                std::string>{std::make_pair("color", "black"), std::make_pair("linewidth", "3")});
+        x_front.clear();
+        y_front.clear();
+        x_back.clear();
+        y_back.clear();
+        plt::pause(0.1);
+    }
 }

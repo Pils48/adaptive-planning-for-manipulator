@@ -59,27 +59,26 @@ Solutions TrivialIK::solveIK(
     const double length_2 = links_length.back();
     Solutions solutions;
     //First solution
-    auto joint_2 = acos((sqr(pose.getX()) + sqr(pose.getY()) - sqr(length_1) - sqr(length_2)) / (2 * length_1 * length_2));
-    auto joint_1 = atan(pose.getY() / pose.getX()) - atan(length_2 * sin(joint_2) / (length_1 + length_2 * cos(joint_2)));
-    ROS_INFO("First solution:");
-    ROS_INFO("Joint 1: %f", (joint_1 - M_PI / 2) * 180 / M_PI);
-    ROS_INFO("Joint 2: %f", joint_2 * 180 / M_PI);
-    if (joint_1 && joint_2)
+    double joint_2 = acos((sqr(pose.getX()) + sqr(pose.getY()) - sqr(length_1) - sqr(length_2)) / (2 * length_1 * length_2));
+    double joint_1 = atan(pose.getY() / pose.getX()) - atan(length_2 * sin(joint_2) / (length_1 + length_2 * cos(joint_2)));
+    ROS_DEBUG("First solution:");
+    ROS_DEBUG("Joint 1: %f", (joint_1 - M_PI / 2) * 180 / M_PI);
+    ROS_DEBUG("Joint 2: %f", joint_2 * 180 / M_PI);
+    if (!isnan(joint_1) && !isnan(joint_2))
     {
         solutions.push_back(vector<double>{joint_1, joint_2});
     }
 
     //Second solution
     joint_2 = -acos((sqr(pose.getX()) + sqr(pose.getY()) - sqr(length_1) - sqr(length_2)) / (2 * length_1 * length_2));
-    joint_1 = atan(pose.getY() / pose.getX()) - atan(links_length.back() * sin(joint_2) / (length_1 + length_2 * cos(joint_2)));
-    if (joint_1 && joint_2)
+    joint_1 = atan(pose.getY() / pose.getX()) - atan(length_2 * sin(joint_2) / (length_1 + length_2 * cos(joint_2)));
+    if (!isnan(joint_1) && !isnan(joint_2))
     {
         solutions.push_back(vector<double>{joint_1, joint_2});
     }
-    ROS_INFO("Second solution:");
-    ROS_INFO("Joint 1: %f", (joint_1 - M_PI / 2) * 180 / M_PI);
-    ROS_INFO("Joint 2: %f", joint_2 * 180 / M_PI);
-    solutions.push_back(vector<double>{joint_1, joint_2});
+    ROS_DEBUG("Second solution:");
+    ROS_DEBUG("Joint 1: %f", (joint_1 - M_PI / 2) * 180 / M_PI);
+    ROS_DEBUG("Joint 2: %f", joint_2 * 180 / M_PI);
     return solutions;
 }
 

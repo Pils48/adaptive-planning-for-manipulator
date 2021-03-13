@@ -16,18 +16,18 @@ class ConfigurationSpace
 public:
     ConfigurationSpace
     (
-        tf::Vector3 trivial_collision,
+        std::vector<tf::Vector3> trivial_collisions,
         moveit::core::RobotModelPtr robot_model
-    ); //testing constructor
+    );
 
     void showPlot();
 
     //ConfigurationSpace(RobotModel, vector<shapes>);
 private:
-    void addCollision(const tf::Vector3 &trivial_collision);
+    void addCollision(const std::vector<tf::Vector3> &trivial_collisions);
 
-    plt::Plot cspace_plot;
-    tf::Vector3 _trivial_collision;
+    plt::Plot _cspace_plot;
+    std::vector<tf::Vector3> _trivial_collisions;
     moveit::core::RobotModelPtr _robot_model;
 
     //vector<shapes> _collision_objects
