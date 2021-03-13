@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<robot name="3_dof_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <link name="base_link"/>
+
+  <link name="link_1">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+          <mesh filename="file:///home/nikita/dev/adaptive-planning-for-manipulator/src/robots/3_dof_robot/meshes/base_link.stl" scale="0.3 0.3 0.3"/>
+      </geometry>
+    </visual>
+    <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="file:///home/nikita/dev/adaptive-planning-for-manipulator/src/robots/3_dof_robot/meshes/base_link.stl" scale="0.3 0.3 0.3"/>
+        </geometry>   
+    </collision>
+  </link>
+
+  <joint name="joint_1" type="revolute">
+      <axis xyz="0.0 0.0 1.0"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <parent link="base_link"/>
+      <child link="link_1"/>
+      <limit effort="30" velocity="1.0" lower="-2.0" upper="2.0" />
+  </joint>
+
+  <link name="link_2">
+    <visual>
+      <origin xyz="0 0 -3.5" rpy="0 0 0"/>
+      <geometry>
+          <mesh filename="file:///home/nikita/dev/adaptive-planning-for-manipulator/src/robots/3_dof_robot/meshes/link_1.stl" scale="0.3 0.3 0.3"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="file:///home/nikita/dev/adaptive-planning-for-manipulator/src/robots/3_dof_robot/meshes/link_1.stl" scale="0.3 0.3 0.3"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="joint_2" type="revolute">
+    <axis xyz="1.0 0.0 0.0"/>
+    <origin xyz="0 0 11" rpy="0 0 0"/>
+    <parent link="link_1"/>
+    <child link="link_2"/>
+    <limit effort="30" velocity="1.0" lower="-2.0" upper="2.0" />
+  </joint>
+
+  <link name="link_3">
+    <visual>
+      <origin xyz="0 0 56" rpy="0 0 0"/>
+      <geometry>
+          <mesh filename="file:///home/nikita/dev/adaptive-planning-for-manipulator/src/robots/3_dof_robot/meshes/link_2.stl" scale="0.3 0.3 0.3"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 56" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="file:///home/nikita/dev/adaptive-planning-for-manipulator/src/robots/3_dof_robot/meshes/link_2.stl" scale="0.3 0.3 0.3"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="joint_3" type="revolute">
+    <axis xyz="1.0 0.0 0.0"/>
+    <origin xyz="0 0 142.5" rpy="0 0 0"/>
+    <parent link="link_2"/>
+    <child link="link_3"/>
+    <limit effort="30" velocity="1.0" lower="-2.0" upper="2.0" />
+  </joint>
+
+  <link name="end_effector">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius="6"/>      
+      </geometry>
+    </visual>
+  </link>
+
+  <joint name="joint_4" type="fixed">
+    <origin xyz="0 0 115" rpy="0 0 0"/>
+    <parent link="link_3"/>
+    <child link="end_effector"/>
+  </joint>
+
+
+</robot>

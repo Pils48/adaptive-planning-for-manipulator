@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
     ROS_INFO("Model %s loaded", kinematic_model->getName().c_str());
     ROS_INFO("Building configuration space...");
     auto trivial_collisions = generateTestPointsArray();
-    ConfigurationSpace c_space(trivial_collisions, kinematic_model);
+    // ConfigurationSpace c_space(trivial_collisions, kinematic_model);
     while(ros::ok())
     {
         /*NOP*/

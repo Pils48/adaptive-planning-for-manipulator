@@ -1,12 +1,12 @@
 <launch>
-  <include file="$(find robots)/2_dof_robot/2_dof_robot.launch"/>
+  <include file="$(find robots)/3_dof_robot/3_dof_robot.launch"/>
 
   <node name="planner_node" 
         pkg="planner" 
         type="planner_node"
         respawn="false" output="screen">
     <rosparam command="load"
-          file="$(find robots)/2_dof_robot/configs/kinematics.yaml"/>
+          file="$(find robots)/3_dof_robot/configs/kinematics.yaml"/>
   </node>
 
 </launch>
