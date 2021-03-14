@@ -4,7 +4,6 @@
 #include <moveit/robot_model_loader/robot_model_loader.h>
 
 //project
-#include "Solver.h"
 #include "ConfigurationSpace.h"
 #include "ros/ros.h"
 
@@ -25,7 +24,7 @@ int main(int argc, char *argv[])
     ROS_INFO("Model %s loaded", kinematic_model->getName().c_str());
     ROS_INFO("Building configuration space...");
     auto trivial_collisions = generateTestPointsArray();
-    // ConfigurationSpace c_space(trivial_collisions, kinematic_model);
+    ConfigurationSpace c_space(trivial_collisions, kinematic_model);
     while(ros::ok())
     {
         /*NOP*/

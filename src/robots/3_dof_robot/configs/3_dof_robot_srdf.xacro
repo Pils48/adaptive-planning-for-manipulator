@@ -9,7 +9,7 @@
         <link name="end_effector" />
     </group>
 
-    <group name="manipulator">
+    <group name="3_dof_manipulator">
         <group name="arm" />
         <group name="gripper" />
     </group>

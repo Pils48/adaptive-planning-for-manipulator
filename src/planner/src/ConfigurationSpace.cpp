@@ -31,15 +31,9 @@ void ConfigurationSpace::showPlot()
 
 void ConfigurationSpace::addCollision(const std::vector<tf::Vector3> &trivial_collisions)
 {
-    //Setting up graphs params
-    plt::title("Image of the obstacle");
-    plt::xlim(-M_PI_2, M_PI);
-    plt::ylim(-M_PI, M_PI);
-    plt::grid(true);
-
-    //Setting up solver params
     robot_state::RobotStatePtr kinematic_state(new robot_state::RobotState(_robot_model));
-    auto joint_model_group = kinematic_state->getJointModelGroup("manipulator");
+    auto joint_model_group = kinematic_state->getJointModelGroup("3_dof_manipulator");
+    ROS_INFO("3_dof_manipulator joint model group loaded");
 
     auto solver = createSolver(*joint_model_group);
     auto chain = solver->getSimplifiedLinksChain(*joint_model_group);
@@ -51,6 +45,16 @@ void ConfigurationSpace::addCollision(const std::vector<tf::Vector3> &trivial_co
     {
         ROS_INFO("link_length: %f", link_length);
     }
+
+    //Setting up graphs params
+    if (_robot_model->getJointModelGroups().size() == 2)
+    {
+    plt::title("Image of the obstacle");
+    plt::xlim(-M_PI_2, M_PI);
+    plt::ylim(-M_PI, M_PI);
+    plt::grid(true);
+
+    //Setting up solver params
     vector<double> x_front, y_front, x_back, y_back; 
     for (size_t idx = 0; idx < trivial_collisions.size(); ++idx)
     {
@@ -90,5 +94,55 @@ void ConfigurationSpace::addCollision(const std::vector<tf::Vector3> &trivial_co
         x_back.clear();
         y_back.clear();
         plt::pause(0.1);
+    }
+    }
+    else if (_robot_model->getJointModelGroups().size() == 3)
+    {
+        vector<double> x_front, y_front, z_front, x_back, y_back, z_back;
+        for (size_t idx = 0; idx < trivial_collisions.size(); ++idx)
+        {
+            for (size_t i = 0; i < total_length / STANDARD_DISCRETIZATION; ++i)
+            {
+                if (i < links_length.back() / STANDARD_DISCRETIZATION)
+                {
+                    auto joints = solver->solveIK(trivial_collisions[idx], 
+                        {links_length.front(), *next(links_length.begin()), links_length.back() - i * STANDARD_DISCRETIZATION});
+                    if (joints.size() == 3)
+                    {
+                        z_front.emplace_back(joints.front()[0]);
+                        x_front.emplace_back(joints.front()[1]);
+                        y_front.emplace_back(joints.front()[2]);
+                        z_back.emplace_back(joints.back()[0]);
+                        x_back.emplace_back(joints.back()[1]);
+                        y_back.emplace_back(joints.back()[2]);
+                    }
+                }
+                else
+                {
+                // auto joints = solver->solveIK(tf::Vector3(0.15, 0.15, 1), 
+                //             {links_length.front() - i * STANDARD_DISCRETIZATION + links_length.back(), 0});
+                // for (const auto &solution : joints)
+                // {
+                //     x.push_back(solution[0]);
+                //     y.push_back(solution[1]);
+                // }
+                }
+            }
+            reverse(z_back.begin(), z_back.end());
+            reverse(x_back.begin(), x_back.end());
+            reverse(y_back.begin(), y_back.end());
+            z_front.insert(z_front.end(), z_back.begin(), z_back.end());
+            x_front.insert(x_front.end(), x_back.begin(), x_back.end());
+            y_front.insert(y_front.end(), y_back.begin(), y_back.end());
+            // plt::plot3(x_front, y_front, z_front, std::map<std::string, 
+            //         std::string>{std::make_pair("color", "black"), std::make_pair("linewidth", "3")});
+            z_front.clear();
+            x_front.clear();
+            y_front.clear();
+            z_back.clear();
+            x_back.clear();
+            y_back.clear();
+            // plt::pause(0.1);
+        } 
     }
 }
