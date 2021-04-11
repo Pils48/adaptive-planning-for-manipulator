@@ -140,9 +140,7 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/planner.cpp
-# )
+  add_library(tinyply src/tinyply.cpp include/planner/tinyply.h)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -170,6 +168,7 @@ target_include_directories(${PROJECT_NAME}_node PRIVATE ${PYTHON_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME}_node
    ${catkin_LIBRARIES}
    ${PYTHON_LIBRARIES}
+   tinyply
  )
 
 #############

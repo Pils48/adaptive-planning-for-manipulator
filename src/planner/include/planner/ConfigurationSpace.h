@@ -6,10 +6,15 @@
 //Internal
 #include "PlannerUtils.h"
 #include "Matplotlibcpp.h"
-
-#define STANDARD_DISCRETIZATION 0.0001 //1cm
+#include "tinyply.h"
 
 namespace plt = matplotlibcpp;
+
+constexpr auto STANDARD_DISCRETIZATION = 0.0001; 
+constexpr auto PLOT_X_LOWER_LIMIT = -M_PI;
+constexpr auto PLOT_X_UPPER_LIMIT = M_PI;
+constexpr auto PLOT_Y_LOWER_LIMIT = -M_PI;
+constexpr auto PLOT_Y_UPPER_LIMIT = M_PI;
 
 class ConfigurationSpace
 {
