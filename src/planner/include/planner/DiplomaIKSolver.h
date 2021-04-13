@@ -5,6 +5,12 @@ class DiplomaIKSolver : public Solver
 public:
     DiplomaIKSolver() = default;
 
+    void solveExpandIK(
+        const std::vector<tf::Vector3> &trivial_collisions, 
+        const std::vector<double> &links_length,
+        bool show
+    );
+
     Solutions solveIK(
         const tf::Vector3 &pose, 
         const std::vector<double> &links_length

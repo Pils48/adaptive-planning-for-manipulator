@@ -7,6 +7,12 @@ class TrivialIK : public Solver
 public:
     TrivialIK() = default;
     
+    void solveExpandIK(
+        const std::vector<tf::Vector3> &trivial_collisions, 
+        const std::vector<double> &links_length,
+        bool show
+    );
+
     bool isJointModelGroupValid(const robot_model::JointModelGroup &joint_model_group);
 
     std::vector<const moveit::core::LinkModel*> getSimplifiedLinksChain(
