@@ -19,16 +19,16 @@ Solutions DiplomaIKSolver::solveIK(
     const tf::Vector3 pose_projection(pose.getX(), pose.getY(), 0);
     const double abs_joint_1 = y_ort.angle(pose_projection);
     const double joint_1 = (pose_projection.cross(y_ort) > 0) ? abs_joint_1 : -abs_joint_1;
-    ROS_INFO("Joint 1: %f", (joint_1 - M_PI / 2) * 180 / M_PI);
+    ROS_DEBUG("Joint 1: %f", (joint_1 - M_PI / 2) * 180 / M_PI);
     
     const double length_1 = *next(links_length.begin());
     const double length_2 = links_length.back();
     Solutions solutions;
     double joint_3 = acos((sqr(pose.getX()) + sqr(pose.getY()) + sqr(pose.getZ()) - sqr(length_1) - sqr(length_2)) / (2 * length_1 * length_2));
     double joint_2 = atan(pose.getZ() / (sqr(pose.getX()) + sqr(pose.getY()))) - atan(length_2 * sin(joint_3) / (length_1 + length_2 * cos(joint_3)));
-    ROS_INFO("First solution:");
-    ROS_INFO("Joint 2: %f", (joint_2 - M_PI / 2) * 180 / M_PI);
-    ROS_INFO("Joint 3: %f", joint_3 * 180 / M_PI);
+    ROS_DEBUG("First solution:");
+    ROS_DEBUG("Joint 2: %f", (joint_2 - M_PI / 2) * 180 / M_PI);
+    ROS_DEBUG("Joint 3: %f", joint_3 * 180 / M_PI);
     if (!isnan(joint_2) && !isnan(joint_3))
     {
         solutions.push_back(vector<double>{joint_1, joint_2, joint_3});
@@ -36,9 +36,9 @@ Solutions DiplomaIKSolver::solveIK(
 
     joint_3 = -acos((sqr(pose.getX()) + sqr(pose.getY()) + sqr(pose.getZ()) - sqr(length_1) - sqr(length_2)) / (2 * length_1 * length_2));
     joint_2 = atan(pose.getZ() / (sqr(pose.getX()) + sqr(pose.getY()))) - atan(length_2 * sin(joint_3) / (length_1 + length_2 * cos(joint_3)));
-    ROS_INFO("Second solution:");
-    ROS_INFO("Joint 2: %f", (joint_2 - M_PI / 2) * 180 / M_PI);
-    ROS_INFO("Joint 3: %f", joint_3 * 180 / M_PI);
+    ROS_DEBUG("Second solution:");
+    ROS_DEBUG("Joint 2: %f", (joint_2 - M_PI / 2) * 180 / M_PI);
+    ROS_DEBUG("Joint 3: %f", joint_3 * 180 / M_PI);
     if (!isnan(joint_2) && !isnan(joint_3))
     {
         solutions.push_back(vector<double>{joint_1, joint_2, joint_3});

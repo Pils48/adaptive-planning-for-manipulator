@@ -23,7 +23,11 @@ int main(int argc, char *argv[])
     robot_model::RobotModelPtr kinematic_model = robot_model_loader.getModel();
     ROS_INFO("Model %s loaded", kinematic_model->getName().c_str());
     ROS_INFO("Building configuration space...");
-    auto trivial_collisions = generateTestPointsArray();
+    auto trivial_collisions = generateTestPointsArray(
+        0.12, 0.16, 0.005,
+        0.12, 0.16, 0.005,
+        0.12, 0.16, 0.005
+    );
     ConfigurationSpace c_space(trivial_collisions, kinematic_model);
     while(ros::ok())
     {
