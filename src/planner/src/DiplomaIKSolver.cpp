@@ -56,27 +56,28 @@ bool DiplomaIKSolver::isJointModelGroupValid(
     const moveit::core::JointModelGroup &joint_model_group
 )
 {
-    // const auto joint_models = joint_model_group.getActiveJointModels();
-    // const auto joints_number = joint_models.size();
-    // if (joints_number > 3)
-    // {
-    //     ROS_ERROR("Diploma solver doesn't support more than three joints!");
-    //     return false;
-    // }
+    const auto joint_models = joint_model_group.getActiveJointModels();
+    const auto joints_number = joint_models.size();
+    if (joints_number > 3)
+    {
+        ROS_ERROR("Diploma solver doesn't support more than three joints!");
+        return false;
+    }
 
-    // vector<const RevoluteJointModel*> revoulute_joint_models;
-    // transform(joint_models.begin(), joint_models.end(), back_inserter(revoulute_joint_models), &castToRevouluteModel);
-    // if ((next(revoulute_joint_models.begin())->getAxis() == revoulute_joint_models.back()->getAxis())
-    //     && (revoulute_joint_models.front()->getAxis()))
-    // {
-    //     ROS_INFO("Trivial chain is valid");
-    //     return true;
-    // }
-    // else
-    // {
-    //     ROS_ERROR("Invalid chain!");
-    //     return false;
-    // }
+    vector<const RevoluteJointModel*> revoulute_joint_models;
+    transform(joint_models.begin(), joint_models.end(), back_inserter(revoulute_joint_models), &castToRevouluteModel);
+    //Check if two last joints have the parallel axis and the first one is perpendicular
+    if (((*next(revoulute_joint_models.begin()))->getAxis() == revoulute_joint_models.back()->getAxis())
+        && (revoulute_joint_models.front()->getAxis().dot(revoulute_joint_models.back()->getAxis()) == 0))
+    {
+        ROS_INFO("Diploma chain is valid");
+        return true;
+    }
+    else
+    {
+        ROS_ERROR("Invalid chain!");
+        return false;
+    }
     return true;
 }
 
@@ -118,7 +119,6 @@ void DiplomaIKSolver::solveExpandIK(
                     {links_length.front(), *next(links_length.begin()), links_length.back() - i * STANDARD_DISCRETIZATION});
                 if (joints.size() == 2)
                 {
-                    // vertices.push_back(vertices.end(), joints.begin(), joints.end());
                     vertices.push_back(double3{ joints.back()[0], joints.back()[1], joints.back()[2] }); 
                     vertices.push_back(double3{ joints.front()[0], joints.front()[1], joints.front()[2] }); 
                 }
