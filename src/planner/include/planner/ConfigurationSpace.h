@@ -1,3 +1,5 @@
+#include <tf/tf.h>
+
 //moveit
 #include <moveit/robot_model/robot_model.h>
 
@@ -5,27 +7,23 @@
 #include "PlannerUtils.h"
 #include "Matplotlibcpp.h"
 
-
-namespace plt = matplotlibcpp;
-
 class ConfigurationSpace
 {
 public:
     ConfigurationSpace
     (
-        Point trivial_collision,
-        moveit::core::RobotModel robot_model
-    ); //testing constructor
+        std::vector<tf::Vector3> trivial_collisions,
+        moveit::core::RobotModelPtr robot_model
+    );
 
     void showPlot();
 
     //ConfigurationSpace(RobotModel, vector<shapes>);
 private:
-    void addCollision(const Point &trivial_collision);
+    void addCollision(const std::vector<tf::Vector3> &trivial_collisions);
 
-    plt::Plot cspace_plot;
-    Point _trivial_collision;
-    moveit::core::RobotModel _robot_model;
+    std::vector<tf::Vector3> _trivial_collisions;
+    moveit::core::RobotModelPtr _robot_model;
 
     //vector<shapes> _collision_objects
 };

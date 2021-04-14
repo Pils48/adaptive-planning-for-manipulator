@@ -1,0 +1,17 @@
+<launch>
+    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find robots)/3_dof_robot/configs/3_dof_robot.xacro'"/>
+    
+    <param name="robot_description_semantic" textfile="$(find robots)/3_dof_robot/configs/3_dof_robot_srdf.xacro" />
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
+    <node name="rviz" pkg="rviz" type="rviz"/>
+    
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" >
+        <param name="use_gui" value="true"/>
+    </node>
+
+    <group ns="$robot_description_kinematics">
+        <rosparam command="load" file="$(find robots)/3_dof_robot/configs/kinematics.yaml"/>
+    </group>
+
+</launch>

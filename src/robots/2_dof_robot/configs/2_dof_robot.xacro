@@ -61,4 +61,20 @@
     <limit effort="30" velocity="1.0" lower="-2.0" upper="2.0" />
   </joint>
 
+  <link name="end_effector">
+    <visual>
+      <origin xyz="0 0 115" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius="6"/>      
+      </geometry>
+    </visual>
+  </link>
+
+  <joint name="joint_3" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="link_2"/>
+    <child link="end_effector"/>
+  </joint>
+
+
 </robot>

@@ -1,14 +1,15 @@
 <?xml version="1.0" ?>
 
-<robot name="2_dof_robot">
+<robot name="3_dof_robot">
     <group name="arm">
-        <chain base_link="base_link" tip_link="link_2"/>
+        <chain base_link="base_link" tip_link="link_3"/>
     </group>
+
     <group name="gripper">
         <link name="end_effector" />
     </group>
 
-    <group name="manipulator">
+    <group name="3_dof_manipulator">
         <group name="arm" />
         <group name="gripper" />
     </group>
@@ -16,6 +17,7 @@
     <group_state name="default" group="arm">
         <joint name="joint_1" value="0" />
         <joint name="joint_2" value="0" />
+        <joint name="joint_3" value="0" />
     </group_state>
 
     <virtual_joint name="virtual_joint" type="fixed" parent_frame="world" child_link="base_link" />

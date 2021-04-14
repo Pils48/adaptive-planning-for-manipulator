@@ -10,6 +10,7 @@ add_compile_options(-std=c++17 -I/usr/include/python2.7 -lpython)
 find_package(catkin REQUIRED COMPONENTS
   interactive_markers
   moveit_core
+  moveit_kinematics
   moveit_ros_planning
   moveit_ros_planning_interface
   roscpp
@@ -19,7 +20,6 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_ros
   tf2_eigen
   tf2_geometry_msgs
-  trac_ik_kinematics_plugin
 )
 
 ## System dependencies are found with CMake's conventions
@@ -120,6 +120,7 @@ catkin_package(
   CATKIN_DEPENDS
     moveit_core
     moveit_visual_tools
+    moveit_kinematics
     moveit_ros_planning_interface
     interactive_markers
     tf2_geometry_msgs
@@ -139,9 +140,7 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/planner.cpp
-# )
+  add_library(tinyply src/tinyply.cpp include/planner/tinyply.h)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -151,7 +150,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_node src/planner_node.cpp src/ConfigurationSpace.cpp)
+add_executable(${PROJECT_NAME}_node src/planner_node.cpp src/ConfigurationSpace.cpp src/TrivialIK.cpp src/Solver.cpp src/PlannerUtils.cpp src/DiplomaIKSolver.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -169,6 +168,7 @@ target_include_directories(${PROJECT_NAME}_node PRIVATE ${PYTHON_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME}_node
    ${catkin_LIBRARIES}
    ${PYTHON_LIBRARIES}
+   tinyply
  )
 
 #############
