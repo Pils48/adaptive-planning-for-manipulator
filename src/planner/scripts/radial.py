@@ -1,7 +1,12 @@
+#!/usr/bin/env python
+
 import cv2 as cv
 import numpy as np
 from math import pi, sqrt, atan, sin, cos
 from datetime import datetime
+
+import rospy
+from std_msgs.msg import Bool
 
 class Radial():
     def __init__(self, w=800, h=600, delta_r=30, delta_fi=10):
@@ -36,7 +41,7 @@ class Radial():
         point_size = 5
         # --------------------------------------------------------
         def painter(event, x, y, flags, param):
-            nonlocal isDrawing, isStart, isTarget, switch
+            # nonlocal isDrawing, isStart, isTarget, switch
             if event == cv.EVENT_LBUTTONDOWN:
                 isDrawing = True
                 cv.circle(img, (x,y), point_size, (0, 0, 0), -1)
@@ -84,8 +89,8 @@ class Radial():
 
     def _set_map(self):
         """
-        на основе препятствий self.img
-        построить полярную карту (x=fi, y=r)
+        basing on obstacles images self.img
+        build polar map (x=fi, y=r)
         """
         if self.img is None:
             raise Exception('No img exists')
@@ -103,7 +108,7 @@ class Radial():
                     j, i = self._xy2polar(x, y)
                     self.map[j, i] = -1
         
-        # заполнить начальные координаты (строку)
+        # remeber initial coordinates
         self.map[0, np.where(self.map[0, :] == 500)] = 1
 
 
@@ -194,7 +199,7 @@ class Radial():
         if self.map[j, i] == 500 or self.map[j, i] == -1:
             return False
 
-        self.local_path = [self.polar2xy(j, i)]  # для удобства будем вести отсчет с 1
+        self.local_path = [self.polar2xy(j, i)]  # more comfortable to begin with 1
 
         h, w = self.map.shape
 
@@ -215,7 +220,7 @@ class Radial():
                 i = i + 1 if i+1 < w else 0
                 rotat_point = (j, i)
      
-            self.local_path.append(self.polar2xy(j, i))  # для удобства будем вести отсчет с 1
+            self.local_path.append(self.polar2xy(j, i))  # more comfortable to begin with 1
     
         if rotat_point is None:
             self.global_path.append(self.target_xy)
@@ -228,7 +233,7 @@ class Radial():
 
     def _xy2polar(self, x, y):
         """
-        против часовой стрелки, начиная от (x>0, y=0)
+        counterclockwise, beginning with (x>0, y=0)
         fi = [0..2*pi)
         return (j, i) - cell in polar self.map
         """
@@ -365,23 +370,32 @@ class Radial():
             i += 1
 
 
+# test = Radial()
+
+# # 1
+# start_point = (10, 10)
+# target_point = (400, 400)
+# test.load_img('map.jpg', start_point, target_point)
+
+# # 2
+# # test.draw_img()
+
+# # Time measure for algorigthm
+# # now = datetime.now()
+# # test.planner(debug=False)
+# # print(datetime.now() - now)
+
+# # test.show_img('final', grid=False, local_path=False, global_path=True)
+
+# cv.waitKey(0)
+# cv.destroyAllWindows()
+def callback(data):
+    rospy.loginfo(data)
+
+
 if __name__ == '__main__':
-    test = Radial()
-
-    # 1
-    start_point = (10, 10)
-    target_point = (400, 400)
-    test.load_img('map.jpg', start_point, target_point)
-
-    # 2
-    test.draw_img()
-
-    # Time measure for algorigthm
-    now = datetime.now()
-    test.planner(debug=False)
-    print(datetime.now() - now)
-
-    test.show_img('final', grid=False, local_path=False, global_path=True)
-
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    rospy.init_node('planner_node', anonymous=True)
+    rospy.Subscriber("space_ready_topic", Bool, callback)
+    rate = rospy.Rate(10) # 10hz
+    while not rospy.is_shutdown():
+        rate.sleep()

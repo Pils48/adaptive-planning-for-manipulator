@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_ros_planning
   moveit_ros_planning_interface
   roscpp
+  rospy
   std_msgs
   rviz_visual_tools
   geometric_shapes
@@ -25,6 +26,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED system filesystem date_time thread)
+find_package(OpenCV REQUIRED)
 
 ## Matplot dependencies
 find_package(PythonLibs 2.7)
@@ -61,8 +63,7 @@ find_package(PythonLibs 2.7)
 ## Generate messages in the 'msg' folder
 # add_message_files(
 #   FILES
-#   Message1.msg
-#   Message2.msg
+#   space_ready.msg
 # )
 
 ## Generate services in the 'srv' folder
@@ -128,6 +129,9 @@ catkin_package(
     EIGEN3
 )
 
+catkin_install_python(PROGRAMS scripts/radial.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 ###########
 ## Build ##
 ###########
@@ -150,7 +154,8 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_node src/planner_node.cpp src/ConfigurationSpace.cpp src/TrivialIK.cpp src/Solver.cpp src/PlannerUtils.cpp src/DiplomaIKSolver.cpp)
+add_executable(configuration_space_node src/planner_node.cpp src/ConfigurationSpace.cpp src/TrivialIK.cpp 
+  src/Solver.cpp src/PlannerUtils.cpp src/DiplomaIKSolver.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -163,9 +168,9 @@ add_executable(${PROJECT_NAME}_node src/planner_node.cpp src/ConfigurationSpace.
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries and directories to link a library or executable target against
-target_include_directories(${PROJECT_NAME}_node PRIVATE ${PYTHON_INCLUDE_DIRS})
+target_include_directories(configuration_space_node PRIVATE ${PYTHON_INCLUDE_DIRS})
 
-target_link_libraries(${PROJECT_NAME}_node
+target_link_libraries(configuration_space_node
    ${catkin_LIBRARIES}
    ${PYTHON_LIBRARIES}
    tinyply

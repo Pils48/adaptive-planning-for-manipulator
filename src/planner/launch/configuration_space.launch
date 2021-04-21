@@ -1,8 +1,8 @@
 <launch>
 
-  <node name="planner_node" 
+  <node name="configuration_space_node" 
         pkg="planner" 
-        type="radial.py"
+        type="configuration_space_node"
         respawn="false" output="screen">
     <rosparam command="load"
           file="$(find robots)/3_dof_robot/configs/kinematics.yaml"/>
