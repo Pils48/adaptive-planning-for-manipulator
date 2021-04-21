@@ -15,8 +15,8 @@ int main(int argc, char *argv[])
 {   
     ros::init(argc, argv, "configuration_space_node");
     ros::NodeHandle node;
-    ros::AsyncSpinner spinner(1);
-    spinner.start();
+    // ros::AsyncSpinner spinner(1);
+    // spinner.start();
     ROS_INFO("configuration_space_node started");
     
     //Init configuration space
@@ -25,12 +25,13 @@ int main(int argc, char *argv[])
     ROS_INFO("Model %s loaded", kinematic_model->getName().c_str());
     ROS_INFO("Building configuration space...");
     auto trivial_collisions = generateTestPointsArray(
-        0.12, 0.16, 0.005,
-        0.12, 0.16, 0.005,
-        0.12, 0.16, 0.005
+        0.12, 0.16, 0.01,
+        0.12, 0.16, 0.01,
+        0.12, 0.16, 0.01
     );
-    ConfigurationSpace c_space(trivial_collisions, kinematic_model);
+    // ConfigurationSpace c_space(trivial_collisions, kinematic_model);
     ros::Publisher space_ready_pub = node.advertise<std_msgs::Bool>("space_ready_topic", 10);
+    
     while(ros::ok())
     {
         std_msgs::Bool is_ready;

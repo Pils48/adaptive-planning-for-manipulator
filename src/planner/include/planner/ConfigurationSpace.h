@@ -16,8 +16,6 @@ public:
         moveit::core::RobotModelPtr robot_model
     );
 
-    void showPlot();
-
     //ConfigurationSpace(RobotModel, vector<shapes>);
 private:
     void addCollision(const std::vector<tf::Vector3> &trivial_collisions);

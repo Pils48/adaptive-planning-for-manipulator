@@ -370,27 +370,28 @@ class Radial():
             i += 1
 
 
-# test = Radial()
-
 # # 1
-# start_point = (10, 10)
-# target_point = (400, 400)
-# test.load_img('map.jpg', start_point, target_point)
+
 
 # # 2
 # # test.draw_img()
 
-# # Time measure for algorigthm
-# # now = datetime.now()
-# # test.planner(debug=False)
-# # print(datetime.now() - now)
 
-# # test.show_img('final', grid=False, local_path=False, global_path=True)
+
 
 # cv.waitKey(0)
 # cv.destroyAllWindows()
 def callback(data):
-    rospy.loginfo(data)
+    test = Radial()
+    start_point = (10, 10)
+    target_point = (400, 400)
+    test.load_img('test_plot.jpg', start_point, target_point)
+    rospy.loginfo("Image is ready getting, searching for path...")
+    # Time measure for algorigthm
+    now = datetime.now()
+    test.planner(debug=False)
+    print(datetime.now() - now)
+    test.show_img('final', grid=False, local_path=False, global_path=True)
 
 
 if __name__ == '__main__':

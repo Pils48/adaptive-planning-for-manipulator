@@ -24,15 +24,10 @@ ConfigurationSpace::ConfigurationSpace
     addCollision(trivial_collisions);
 }
 
-void ConfigurationSpace::showPlot()
-{
-
-}
-
 void ConfigurationSpace::addCollision(const vector<tf::Vector3> &trivial_collisions)
 {
     robot_state::RobotStatePtr kinematic_state(new robot_state::RobotState(_robot_model));
-    auto joint_model_group = kinematic_state->getJointModelGroup("3_dof_manipulator");
+    auto joint_model_group = kinematic_state->getJointModelGroup("manipulator");
     ROS_INFO("%s joint model group loaded", joint_model_group->getName().c_str());
 
     auto solver = createSolver(*joint_model_group);

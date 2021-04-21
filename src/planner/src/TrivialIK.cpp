@@ -116,7 +116,6 @@ void TrivialIK::solveExpandIK(
         plt::title("Image of the obstacle");
         plt::xlim(PLOT_X_LOWER_LIMIT, PLOT_X_UPPER_LIMIT);
         plt::ylim(PLOT_Y_LOWER_LIMIT, PLOT_Y_UPPER_LIMIT);
-        plt::grid(true);
     }
 
     //Setting up solver params
@@ -159,5 +158,7 @@ void TrivialIK::solveExpandIK(
             plt::pause(0.1);
         }
     }
+    ROS_INFO("Saving image file...");
+    plt::save("test_plot.jpg");
 }
 
