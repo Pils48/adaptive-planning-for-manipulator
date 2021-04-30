@@ -159,6 +159,6 @@ void TrivialIK::solveExpandIK(
         }
     }
     ROS_INFO("Saving image file...");
-    plt::save("test_plot.jpg");
+    plt::save("test_plot.png");
 }
 

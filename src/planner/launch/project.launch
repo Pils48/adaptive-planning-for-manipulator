@@ -1,4 +1,5 @@
 <launch>
+
   <include file="$(find planner)/launch/planner_node.launch"/>
   
   <include file="$(find planner)/launch/configuration_space.launch"/>

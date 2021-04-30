@@ -109,6 +109,7 @@ class Radial():
                     self.map[j, i] = -1
         
         # remeber initial coordinates
+        # print(self.map[0, 0])
         self.map[0, np.where(self.map[0, :] == 500)] = 1
 
 
@@ -136,6 +137,7 @@ class Radial():
                 cv.line(img,  (x, y), (xk, yk), (0, 255, 0), 3)
 
         cv.imshow(wnd_name, img)
+        cv.waitKey(0)
 
 
     def _show_map(self):
@@ -316,10 +318,12 @@ class Radial():
         """
         img = cv.imread(img_path, 0)
         np.where(img < 127, 0, 255)
-
-        self.h, self.w = img.shape
+        # Debug section
+        crop_img = img[67:530, 108:706]
+        self.h, self.w = crop_img.shape
+        #Debug
         self.img = 255*np.ones((self.h, self.w, 3), dtype=np.uint8)
-        self.img[img == 0] = (0, 0, 0)
+        self.img[crop_img == 0] = (0, 0, 0)
 
         self.global_path = [start_point]
         self.x0, self.y0 = start_point
@@ -383,15 +387,15 @@ class Radial():
 # cv.destroyAllWindows()
 def callback(data):
     test = Radial()
-    start_point = (10, 10)
-    target_point = (400, 400)
-    test.load_img('test_plot.jpg', start_point, target_point)
+    start_point = (150, 150)
+    target_point = (200, 200)
+    test.load_img('test_plot.png', start_point, target_point) #error hadling???
     rospy.loginfo("Image is ready getting, searching for path...")
     # Time measure for algorigthm
     now = datetime.now()
     test.planner(debug=False)
-    print(datetime.now() - now)
-    test.show_img('final', grid=False, local_path=False, global_path=True)
+    # print(datetime.now() - now)
+    test.show_img('final', grid=True, local_path=True, global_path=True)
 
 
 if __name__ == '__main__':
