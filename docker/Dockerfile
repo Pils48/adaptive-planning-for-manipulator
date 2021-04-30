@@ -29,6 +29,7 @@ RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main"
     apt-get update && DEBIAN_FRONTEND=noninteractive \
                       apt-get install -y ros-kinetic-desktop-full \
                                          ros-kinetic-moveit \
+                                         ros-kinetic-rviz-visual-tools \
                                          python-rosdep \
                                          python-wstool \
                                          python-catkin-tools &&\
