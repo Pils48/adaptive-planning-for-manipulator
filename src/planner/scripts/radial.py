@@ -4,11 +4,13 @@ import cv2 as cv
 import numpy as np
 from math import pi, sqrt, atan, sin, cos
 from datetime import datetime
+from planner import Planner
+import os
 
 import rospy
 from std_msgs.msg import Bool
 
-class Radial():
+class Radial(Planner):
     def __init__(self, w=800, h=600, delta_r=30, delta_fi=10):
         """
         :param w: window width - pixels
@@ -22,125 +24,35 @@ class Radial():
         self.h = h
      
         # start point
-        self.x0 = self.y0 = 0
+        self.start_xy = self.target_xy = None
 
-        self.img = self.target_xy = self.global_path = \
-                    self.local_path = self.map = None
+        self.img = self.path = None
+        self.local_path = self.map = None
 
+        # list of (x, y)
+        self.collisions = None
 
-    def draw_img(self):
-        """
-        drawing start point (R button)
-                end point (R button)
-                collision (L button)
-        """
-        isDrawing = False
-        isStart = True
-        isTarget = False
-        switch = False
-        point_size = 5
-        # --------------------------------------------------------
-        def painter(event, x, y, flags, param):
-            # nonlocal isDrawing, isStart, isTarget, switch
-            if event == cv.EVENT_LBUTTONDOWN:
-                isDrawing = True
-                cv.circle(img, (x,y), point_size, (0, 0, 0), -1)
-
-            if event == cv.EVENT_MOUSEMOVE:
-                if isDrawing == True:
-                    cv.circle(img, (x,y), point_size, (0, 0, 0), -1)
-
-            if event == cv.EVENT_LBUTTONUP:
-                isDrawing = False
-                cv.circle(img, (x,y), point_size, (0, 0, 0), -1)
-
-            if event == cv.EVENT_RBUTTONDOWN:
-                if isStart:
-                    cv.circle(img, (x,y), 10, (255, 1, 1), -1)
-                    self.x0, self.y0 = x, y
-                    self.global_path = [(x, y)]
-                    isStart = False
-                    switch = True
-                if isTarget:
-                    cv.circle(img, (x,y), 10, (1, 1, 255), -1)
-                    self.target_xy = (x, y)
-                    isTarget = False
-                    switch = False
-
-            if event == cv.EVENT_RBUTTONUP:
-                if switch:
-                    isTarget = True   
-        #-----------------------------------
-        img = 255*np.ones((self.h, self.w, 3), dtype=np.uint8)
-        cv.namedWindow('Draw collisions')
-        cv.setMouseCallback('Draw collisions', painter)
-        print('Press Esc to stop drawing')
-
-        while(1):
-            cv.imshow('Draw collisions', img)
-            if cv.waitKey(1) == 27:    # Esc
-                if not self.target_xy:
-                    print('Set target point!')
-                else:
-                    self.img = img
-                    break
-
-        cv.destroyAllWindows()
 
     def _set_map(self):
         """
-        basing on obstacles images self.img
+        basing on obstacles self.img
         build polar map (x=fi, y=r)
         """
-        if self.img is None:
-            raise Exception('No img exists')
-
         h, w, _ = self.img.shape
 
         self.target_ji = self._xy2polar(*self.target_xy)
 
-        self.map = 500*np.ones((w // self.delta_r, 360 // self.delta_fi), dtype=np.int16)   # in polar 
+        self.map = 500*np.ones(((w+h) // self.delta_r, 360 // self.delta_fi), dtype=np.int16)   # in polar 
 
-        d = self.delta_r // 2
-        for x in range(d//2, w - d//2 + 1, d):
-            for y in range(d//2, w - d//2 + 1, d):
-                if np.any(self.img[y-d//2 : y+d//2, x-d//2:x+d//2, 0] == 0):  # collision
-                    j, i = self._xy2polar(x, y)
-                    self.map[j, i] = -1
-        
-        # remeber initial coordinates
-        # print(self.map[0, 0])
+        for (x, y) in zip(self.collisions[0], self.collisions[1]):
+            j, i = self._xy2polar(x, y)
+            self.map[j, i] = -1
+            
+        # initialize coordinates (string)
         self.map[0, np.where(self.map[0, :] == 500)] = 1
 
 
-    def show_img(self, wnd_name, grid=False, local_path=False, global_path=True):
-        """
-        :param wnd_name: window title
-        :param grid: whether to plot polar grid
-        :param local_path: whether to plot local path (yellow points)
-        :param global_path: whether to plot global path (green lines)
-        """
-        img = self.img.copy()
-        
-        if grid:
-            img = self._draw_polar_grid(img)
-
-        # draw local path (yellow points)
-        if self.local_path and local_path:
-            for x, y in self.local_path:
-                cv.circle(img, (x, y), 4, (1, 255, 255), -1)     # yellow points
-
-        # draw global path (green points)
-        if self.global_path and global_path:
-            for i, (x, y) in enumerate(self.global_path[:-1]):
-                xk, yk = self.global_path[i+1]
-                cv.line(img,  (x, y), (xk, yk), (0, 255, 0), 3)
-
-        cv.imshow(wnd_name, img)
-        cv.waitKey(0)
-
-
-    def _show_map(self):
+    def show_map(self):
         print('d_r = {} px, d_fi = {} grad'.format(self.delta_r, self.delta_fi))
         grid = 40
         h, w = self.map.shape
@@ -172,26 +84,31 @@ class Radial():
 
         for (j, i) in query:
             cell = self.map[j, i]
-            if cell != -1:
 
-                def move(dist):
-                    dj, di = dist
-                    if self.map[dj, di] > -1 and cell + 1 < self.map[dj, di]:
-                        self.map[dj, di] = cell + 1
-                        query.append((dj, di))
-                        return True
-                    return False
+            if self.map[j_target, i_target] < 500:
+                break
 
-                # down
-                if j+1 < h: move((j+1, i))
-                # up
-                if j > 0: move((j-1, i))
-                # right
-                move((j, i+1)) if i+1 < w else move((j, 0))   # 360 grad = 0 grad 
-                # left
-                move((j, i-1))
+            def move(dist):
+                dj, di = dist
+                if self.map[dj, di] > -1 and cell + 1 < self.map[dj, di]:
+                    self.map[dj, di] = cell + 1
+                    query.append((dj, di))
 
+            # down
+            if j+1 < h:
+               move((j+1, i))
+            # up
+            if j > 0:
+               move((j-1, i))
+            # right
+            if i+1 < w:
+                move((j, i+1)) 
+            else: 
+                move((j, 0))   # 360 grad = 0 grad 
+            # left
+            move((j, i-1))
 
+                
     def _find_path(self):
         """
         by means filled self.map
@@ -201,7 +118,7 @@ class Radial():
         if self.map[j, i] == 500 or self.map[j, i] == -1:
             return False
 
-        self.local_path = [self.polar2xy(j, i)]  # more comfortable to begin with 1
+        self.local_path = [self._polar2xy(j, i)]  # counting from 1
 
         h, w = self.map.shape
 
@@ -222,25 +139,26 @@ class Radial():
                 i = i + 1 if i+1 < w else 0
                 rotat_point = (j, i)
      
-            self.local_path.append(self.polar2xy(j, i))  # more comfortable to begin with 1
+            self.local_path.append(self._polar2xy(j, i))  # counting from 1
     
         if rotat_point is None:
-            self.global_path.append(self.target_xy)
+            self.path.append(self.target_xy)
         else:
-            x, y = self.polar2xy(*rotat_point)
-            self.global_path.append((x, y))
+            x, y = self._polar2xy(*rotat_point)
+            self.path.append((x, y))
 
         return True
 
 
     def _xy2polar(self, x, y):
         """
-        counterclockwise, beginning with (x>0, y=0)
+        counterclockwise, starting from (x>0, y=0)
         fi = [0..2*pi)
         return (j, i) - cell in polar self.map
         """
-        x -= self.x0
-        y -= self.y0
+        x0, y0 = self.start_xy
+        x -= x0
+        y -= y0
         r = sqrt(x*x + y*y)
         if x == 0 and y < 0:
             fi = -pi/2
@@ -260,7 +178,8 @@ class Radial():
 
         return int(r / self.delta_r), int(fi / self.delta_fi)
 
-    def polar2xy(self, j, i):
+
+    def _polar2xy(self, j, i):
         """
         :param j: r axis in self.map
         :param i: fi axis in self.map
@@ -272,133 +191,119 @@ class Radial():
         
         fi = fi / 180 * pi # radian to degree
 
-        x = r*cos(fi) + self.x0
-        y = self.y0 - r*sin(fi)
+        x = r*cos(fi) + self.start_xy[0]
+        y = self.start_xy[1] - r*sin(fi)
         
         return int(x), int(y)
 
 
-    def _draw_polar_grid(self, img):
-        r_max = 600
+    def _plot_grid(self, img):
+        r_max = 2000
         for fi in range(0, 360, self.delta_fi):
             fi = fi / 180 * pi  # to rad
 
-            x = int(r_max*cos(fi)) + self.x0
-            y = self.y0 - int(r_max*sin(fi))
+            x = int(r_max*cos(fi)) + self.start_xy[0]
+            y = self.start_xy[1] - int(r_max*sin(fi))
 
-            cv.line(img,  (self.x0, self.y0), (x, y), color=(0, 0, 0))
+            cv.line(img,  self.start_xy, (x, y), color=(0, 0, 0))
 
         for r in range(self.delta_r, r_max, self.delta_r):
-            cv.circle(img, (self.x0, self.y0), r, (0, 0, 0))
+            cv.circle(img, self.start_xy, r, (0, 0, 0))
         
         return img
 
 
-    def set_img(self, img, start_point, target_point):
-        """
-        :param img: 2-D numpy array (h, w, 3)
-        :param start_point: (x, y)
-        :param end_point: (x, y)
-        """
-        if len(img.shape) == 2:
-            self.h, self.w = img.shape
-            self.img = 255*np.ones((self.h, self.w, 3), dtype=np.uint8)
-            self.img[img == 0] = (0, 0, 0)
+    def _get_collision_points(self):
 
-        self.global_path = [start_point]
-        self.x0, self.y0 = start_point
-        self.target_xy = target_point
-
-
-    def load_img(self, img_path, start_point, target_point):
-        """
-        :param img_path: path/to/img
-        :param start_point: (x, y)
-        :param end_point: (x, y)
-        """
-        img = cv.imread(img_path, 0)
-        np.where(img < 127, 0, 255)
-        # Debug section
-        crop_img = img[67:530, 108:706]
-        self.h, self.w = crop_img.shape
-        #Debug
-        self.img = 255*np.ones((self.h, self.w, 3), dtype=np.uint8)
-        self.img[crop_img == 0] = (0, 0, 0)
-
-        self.global_path = [start_point]
-        self.x0, self.y0 = start_point
-        self.target_xy = target_point
-
-
-    def get_path(self, array=True):
-        """
-        get global path
-        :return path: 2-D array (Npoints, 2coords) if array
-                      else
-                      list of (x_i, y_i)
-        """
-        if self.global_path is None or len(self.global_path) < 2:
-            print('Path is undefined. Use planner')
-
-        n = len(self.global_path)
-        path = np.empty((n, 2), dtype=np.int16)
-        if array:
-            for i, (x, y) in enumerate(self.global_path):
-                path[i][0] = x
-                path[i][1] = y
-            return path
+        h, w, _ = self.img.shape
         
-        return self.global_path
+        y, x = np.where(self.img[:, :, 0] == 0)
+
+        self.collisions = (x, y)
+        
+
+    def _get_contours_only(self):
+        """ remain only contours of collisions """
+
+        img = cv.cvtColor(self.img, cv.COLOR_BGR2GRAY)
+
+        _, thresh = cv.threshold(img, 1, 255, cv.THRESH_BINARY)
+
+        c = cv.findContours(image=thresh, mode=cv.RETR_TREE, method=cv.CHAIN_APPROX_SIMPLE)
+
+        np_countours = np.array(c)
+
+        img = 255*np.ones((self.h, self.w, 3), dtype=np.uint8)
+
+        cv.drawContours(image=img, contours=np_countours, contourIdx=-1, color=(0, 0, 0), thickness=1)
+
+        self.img = img
 
 
     def planner(self, debug=False):
         """
         :return: ls of [(x, y)] - path or None
         """
+        check_message = self._check_input_data()
+        if check_message != 'OK':
+            raise Exception(check_message)
+
+        self._get_contours_only()
+
+        #now = datetime.now()
+        self._get_collision_points()
+
+        #return
+
+        self._set_map()
+
+        #print('init', datetime.now() - now)
+
+        self.path = [self.start_xy]
+
         i = 1
-        while self.global_path[-1] != self.target_xy:
+        while self.path[-1] != self.target_xy:
+            #now = datetime.now()
             self._set_map()
+            #print('set map', datetime.now() - now)
+            #now = datetime.now()
             self._lee()
+            #print('lee', datetime.now() - now)
             path_exists = self._find_path()
-            if not path_exists:
-                print('Path does not exists')
-                self.global_path = None
-                return None
 
             if debug:
                 img_name = 'img{}'.format(i)
-                self.show_img(img_name, grid=True, local_path=True, global_path=False)
+                self.show_img(title='img{}'.format(i), grid=True)
 
-            self.x0, self.y0 = self.global_path[-1]
+            if not path_exists:
+                print('Path does not exists')
+                self.path = None
+                return None
+
+            self.start_xy = self.path[-1]
 
             i += 1
-
-
-# # 1
-
-
-# # 2
-# # test.draw_img()
-
-
-
-
-# cv.waitKey(0)
-# cv.destroyAllWindows()
+    
 def callback(data):
-    test = Radial()
+    test = Radial(delta_r=10, delta_fi=5)
     start_point = (150, 150)
-    target_point = (200, 200)
-    test.load_img('test_plot.png', start_point, target_point) #error hadling???
+    target_point = (400, 100)
+    img = cv.imread('test_plot.jpg', 0)
+    crop_img = img[67:530, 108:706]
+    cv.imwrite('test_plot_cropped.jpg', crop_img)
+    test.load_img('test_plot_cropped.jpg', start_point, target_point)
     rospy.loginfo("Image is ready getting, searching for path...")
     # Time measure for algorigthm
     now = datetime.now()
     test.planner(debug=False)
     # print(datetime.now() - now)
-    test.show_img('final', grid=True, local_path=True, global_path=True)
+    test.show_img('final', grid=True, path=True)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
 
 
 if __name__ == '__main__':
+    #ros initialization
     rospy.init_node('planner_node', anonymous=True)
     rospy.Subscriber("space_ready_topic", Bool, callback)
     rate = rospy.Rate(10) # 10hz

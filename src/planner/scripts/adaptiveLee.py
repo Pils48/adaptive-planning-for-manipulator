@@ -1,6 +1,8 @@
 import numpy as np
 import cv2 as cv
 from datetime import datetime
+import os
+from planner import Planner
 
 # ------------------------------------- Parametres -----------------------------------
 MAX_discrete = 2**2     # макс. дискрета будет в 4 раза больше мин. дискреты
@@ -8,128 +10,28 @@ MAX_discrete = 2**2     # макс. дискрета будет в 4 раза б
 MAX_step = 100          # ограничение на кол-во шагов
 
 # markers on the map
-clean_mark = 0          # no collision
 collsn_mark = -1
 start_mark = 1
 target_mark = MAX_step
 
-class AdaptiveLee():
-    def __init__(self, w, h, d=10):
+class AdaptiveLee(Planner):
+    def __init__(self, w=800, h=600, d=10):
         """
         :param h: height of img in pixels
         :param w: wiight of img in pixels
         """
-        self.img_shape = (h, w)
-        self.img = 255*np.ones((h, w, 3), np.uint8)                 # 3 channels
         self.map = self.map_shape = None
+        self.w, self.h = w, h
         self.d = d
 
-        self.start_xy = ()     # (x, y) start point on img
-        self.target_xy = ()    # (x, y) target point on img
-        self.path = []         # ls of [d, j, i]
-        self.steps = 0
+        self.start_xy = self.target_xy = None     
 
-
-    def draw_img(self):
-        """
-        drawing start point (R button)
-                end point (R button)
-                collision (L button)
-        """
-        isDrawing = False
-        isStart = True
-        isTarget = False
-        switch = False
-        # --------------------------------------------------------
-        def painter(event, x, y, flags, param):
-            nonlocal isDrawing, isStart, isTarget, switch
-            if event == cv.EVENT_LBUTTONDOWN:
-                isDrawing = True
-                cv.circle(img, (x,y), 10, (0, 0, 0), -1)
-
-            if event == cv.EVENT_MOUSEMOVE:
-                if isDrawing == True:
-                    cv.circle(img, (x,y), 10, (0, 0, 0), -1)
-
-            if event == cv.EVENT_LBUTTONUP:
-                isDrawing = False
-                cv.circle(img, (x,y), 10, (0, 0, 0), -1)
-
-            if event == cv.EVENT_RBUTTONDOWN:
-                if isStart:
-                    cv.circle(img, (x,y), 3, (255, 1, 1), -1)
-                    self.start_xy = (x, y)
-                    isStart = False
-                    switch = True
-                if isTarget:
-                    cv.circle(img, (x,y), 3, (1, 1, 255), -1)
-                    self.target_xy = (x, y)
-                    isTarget = False
-                    switch = False
-
-            if event == cv.EVENT_RBUTTONUP:
-                if switch:
-                    isTarget = True   
-        #-----------------------------------
-
-        img = self.img.copy()
-        cv.namedWindow('Draw collisions')
-        cv.setMouseCallback('Draw collisions', painter)
-        print('Press Esc to stop drawing')
-
-        while(True):
-            cv.imshow('Draw collisions', img)
-            if cv.waitKey(1) == 27:    # Esc
-                if self.start_xy == () or self.target_xy == ():
-                    print('Set start point and/or target point')
-                else:
-                    # end drawing
-                    self.img = img
-                    self._set_map()   # формирование карт для всех дискрет
-                    break
-
-        cv.destroyAllWindows()
-
-
-    def load_img(self, img_path, start_point, target_point):
-        """
-        :param img_path: path/to/img
-        :param start_point: (x, y)
-        :param end_point: (x, y)
-        """
-        img = cv.imread(img_path, 0)
-        np.where(img < 127, 0, 255)
-
-        self.img_shape = img.shape
-
-        h, w = img.shape
-        self.img = 255*np.ones((h, w, 3), dtype=np.uint8)
-        self.img[img == 0] = (0, 0, 0)
-
-        self.start_xy = start_point
-
-        self.target_xy = target_point
-
-        self._set_map()
-
-
-    def set_img(self, img, start_point, target_point):
-        """
-        :param img: 2-D numpy array (h, w, 3)
-        :param start_point: (x, y)
-        :param end_point: (x, y)
-        """
-        if len(img.shape) == 2:
-            self.h, self.w = img.shape
-            self.img = 255*np.ones((self.h, self.w, 3), dtype=np.uint8)
-            self.img[img == 0] = (0, 0, 0)
-
-        self.start_xy = start_point
-
-        self.target_xy = target_point
-
-        self._set_map()
-
+        # ls of (d, j, i)
+        self.path_ji = []  
+        
+        # ls of (x, y)
+        self.path = []                                  
+        
 
     def _set_map(self):
         """ формирование карт для всех дискрет """
@@ -210,42 +112,31 @@ class AdaptiveLee():
         self.img = img
 
 
-    def show_img(self, grid=True, path=True):
-        """ картинка будет увеличена в 2 раза """
-        img = cv.resize(self.img, (self.img_shape[1]*2, self.img_shape[0]*2), interpolation = cv.INTER_AREA)
+    def _plot_grid(self, img):
 
-        if self.steps > 0 and grid:    # 
-            def recurrent(j0, i0, jk, ik, d):
-                nonlocal img
+        txt_size = self.d / (MAX_discrete * 20)
+
+        def recurrent(j0, i0, jk, ik, d):
                 for j in range(j0, jk):
                     for i in range(i0, ik):
                         if self.map[d][j][i] > collsn_mark:
                             # convert [d][j][i] on map  ->  (x, y) on img
-                            x0, y0 = i*d*self.d*2, j*d*self.d*2
-                            xk, yk = (i+1)*d*self.d*2, (j+1)*d*self.d*2
+                            x0, y0 = i*d*self.d, j*d*self.d
+                            xk, yk = (i+1)*d*self.d, (j+1)*d*self.d
                             
-                            cv.rectangle(img, (x0, y0), (xk, yk), (0, 0, 0), 2)
+                            cv.rectangle(img, (x0, y0), (xk, yk), (150, 150, 150), 1)
 
-                            if self.steps > 0:
-                                # отображение значения в данной дискрете
-                                text = str(self.map[d][j][i])[:3]
-                                cv.putText(img, text, (x0+5, (y0+yk)//2+2), cv.FONT_HERSHEY_SIMPLEX, 1/(MAX_discrete/d), (0,0,0), 1)
+                            # отображение значения в данной дискрете
+                            text = str(self.map[d][j][i])[:3]
+                            cv.putText(img, text, (x0+5, (y0+yk)//2+2), cv.FONT_HERSHEY_SIMPLEX, txt_size * d, (0,0,0), 1)
                         else:
                             if d > 1:
                                 recurrent(j*2, i*2, j*2+2, i*2+2, d // 2)
 
-            m, n = self.map_shape[MAX_discrete]
-            recurrent(0, 0, m, n, MAX_discrete)
+        m, n = self.map_shape[MAX_discrete]
+        recurrent(0, 0, m, n, MAX_discrete)
 
-        if path and self.path:
-            d, j, i = self.path[0]
-            x0, y0 = int((d*self.d)*(i+0.5)), int((d*self.d)*(j+0.5))
-            for (d, j, i) in self.path[1:]:
-                x, y = int((d*self.d)*(i+0.5)), int((d*self.d)*(j+0.5))
-                cv.line(img, (x0*2, y0*2), (x*2, y*2), (0, 255, 0), 3)
-                x0, y0 = x, y
-
-        cv.imshow('img', img)
+        return img
 
 
     def show_map(self):
@@ -314,8 +205,13 @@ class AdaptiveLee():
 
 
     def planner(self):
-        if self.map is None:
-            raise Exception('Map is undefined. Use load_map() or draw_map()')
+        check_message = self._check_input_data()
+        if check_message != 'OK':
+            raise Exception(check_message)
+
+        self._set_map()
+
+        self.path = []
 
         d0, j0, i0 = self.start             # начальное положение
         self.map[d0][j0][i0] = start_mark   # отмечаем на карте
@@ -454,46 +350,56 @@ class AdaptiveLee():
 
         # т.к. мы шли с конца, нужно развернуть
         path.reverse()
-        self.path = path
+
+        # coords to xy
+        self.path = [self.start_xy]
+        for (d, j, i) in path[1 :-1]:
+            d = d * self.d
+            x, y = i * d + d//2, j * d + d//2
+            self.path.append((x, y))
+
+        self.path.append(self.target_xy)
 
 
-    def get_path(self, array=True):
-        if len(self.path) < 2:
-            print('No path exists')
-            return None
+if __name__ == '__main__':
+    test = AdaptiveLee(w=800, h=600, d=10)
 
-        path = []
-        for (d, j, i) in self.path:
-            x, y = (d*self.d)*i + self.d//2, (d*self.d)*j + self.d//2
+    # 1
+    images_dir = 'maps'
+    indx = 8
 
-        n = len(path)
-        if array:
-            array_path = np.empty((n, 2), dtype=np.int16)
-            for i, (x, y) in enumerate(path):
-                array_path[i][0] = x
-                array_path[i][1] = y
-            return array_path
+    for f in os.listdir(images_dir):
+        if not '.jpg' in f:
+            continue
+        if f[0] != str(indx):
+            continue
 
-        return path
+        img_path = os.path.join(images_dir, f)
+        break
 
+    f = os.path.splitext(f)[0]
+    i, start_point, target_point = f.split('_')
+   
+    start_point = tuple(start_point[1:-1].split(','))
+    start_point = (int(start_point[0]), int(start_point[1]))
 
+    target_point = tuple(target_point[1:-1].split(','))
+    target_point = (int(target_point[0]), int(target_point[1]))
 
-test = AdaptiveLee(w=400, h=320)
+    test.load_img(img_path, start_point, target_point)
 
-# 1
-test.load_img('map.jpg', (10, 10), (350, 300))
+    # 2
+    test.draw_img()
 
-# 2
-#test.draw_img()
+    now = datetime.now()
+    test.planner()
+    print('TIME:', datetime.now() - now)
 
-now = datetime.now()
-test.planner()
-print('TIME:', datetime.now() - now)
+    test.show_img(grid=True, path=True)
 
-test.show_img(grid=True, path=True)
-
-cv.waitKey(0)
-cv.destroyAllWindows()
+    print('S =', int(test.get_len_path()))
+    cv.waitKey(0)
+    cv.destroyAllWindows()
 
 
 

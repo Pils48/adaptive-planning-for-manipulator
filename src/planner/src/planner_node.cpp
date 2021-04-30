@@ -29,14 +29,14 @@ int main(int argc, char *argv[])
         0.12, 0.16, 0.01,
         0.12, 0.16, 0.01
     );
-    // ConfigurationSpace c_space(trivial_collisions, kinematic_model);
+    ConfigurationSpace c_space(trivial_collisions, kinematic_model);
     ros::Publisher space_ready_pub = node.advertise<std_msgs::Bool>("space_ready_topic", 10);
     
     while(ros::ok())
     {
         std_msgs::Bool is_ready;
         is_ready.data = true;
-        space_ready_pub.publish(is_ready);
+        // space_ready_pub.publish(is_ready);
     }
     return 0;
 }

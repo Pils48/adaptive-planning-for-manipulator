@@ -1,9 +1,10 @@
 import cv2 as cv
 import numpy as np
-from math import pi, sqrt, atan, sin, cos
 from datetime import datetime
+from planner import Planner
+from math import sqrt
 
-class Graph():
+class Graph(Planner):
     def __init__(self, w=800, h=600, grid_size=20):
         """
         :param w: window width - pixels
@@ -15,103 +16,35 @@ class Graph():
         self.w = w
         self.h = h
      
-        # start point
+        # array M*M - graph of distances
         self.graph = None
+        
         self.graph_points = []
         # [(x0, y0), (xk, yk), ... ]
 
         self.path = None
-        # ls of points in self.graph_points
+        # ls of (x, y)
+
+        self.start_xy = self.target_xy = None
         
         self.img = None
 
 
-    def draw_img(self):
-        """
-        drawing start point (R button)
-                end point (R button)
-                collision (L button)
-        """
-        isDrawing = False
-        isStart = True
-        isTarget = False
-        switch = False
-        self.graph = self.graph_points = None
-        point_size = 5
-        # --------------------------------------------------------
-        def painter(event, x, y, flags, param):
-            nonlocal isDrawing, isStart, isTarget, switch
-            if event == cv.EVENT_LBUTTONDOWN:
-                isDrawing = True
-                cv.circle(img, (x,y), point_size, (0, 0, 0), -1)
+    def _plot_grid(self, img):
+        # grid
+        for y in range(self.gs, self.h, self.gs):
+            cv.line(img, (0, y), (self.w, y), color=(0, 0, 0))
+        for x in range(self.gs, self.w, self.gs):
+            cv.line(img, (x, 0), (x, self.h), color=(0, 0, 0))
 
-            if event == cv.EVENT_MOUSEMOVE:
-                if isDrawing == True:
-                    cv.circle(img, (x,y), point_size, (0, 0, 0), -1)
+        # graph points
+        for i, (x, y) in enumerate(self.graph_points):
+            if i > 1:
+                # don't draw start/end points
+                cv.circle(img, (x, y), 4, (1, 255, 255), -1)
+            cv.putText(img, str(i + 1), (x + 10, y + 5), cv.FONT_HERSHEY_SIMPLEX, 0.7, 2, 1)
 
-            if event == cv.EVENT_LBUTTONUP:
-                isDrawing = False
-                cv.circle(img, (x,y), point_size, (0, 0, 0), -1)
-
-            if event == cv.EVENT_RBUTTONDOWN:
-                if isStart:
-                    cv.circle(img, (x,y), 10, (255, 1, 1), -1)
-                    self.graph_points = [(x, y)]
-                    isStart = False
-                    switch = True
-                if isTarget:
-                    cv.circle(img, (x,y), 10, (1, 1, 255), -1)
-                    self.graph_points.append((x, y))
-                    isTarget = False
-                    switch = False
-
-            if event == cv.EVENT_RBUTTONUP:
-                if switch:
-                    isTarget = True   
-
-        #-----------------------------------
-        img = 255*np.ones((self.h, self.w, 3), dtype=np.uint8)
-        cv.namedWindow('Draw collisions')
-        cv.setMouseCallback('Draw collisions', painter)
-        print('Press Esc to stop drawing')
-
-        while(1):
-            cv.imshow('Draw collisions', img)
-            if cv.waitKey(1) == 27:    # Esc
-                if len(self.graph_points) < 2:
-                    print('Set target point!')
-                else:
-                    self.img = img
-                    break
-
-        cv.destroyAllWindows()
-
-
-    def show_img(self, wnd_name, grid=True, graph=True, path=True):
-        img = self.img.copy()
-        
-        # draw grid
-        if grid:
-            for y in range(self.gs, self.h, self.gs):
-                cv.line(img, (0, y), (self.w, y), color=(0, 0, 0))
-            for x in range(self.gs, self.w, self.gs):
-                cv.line(img, (x, 0), (x, self.h), color=(0, 0, 0))
-
-        if self.graph_points:
-            for i, (x, y) in enumerate(self.graph_points):
-                if i > 1:
-                    # don't draw start/end points
-                    cv.circle(img, (x, y), 4, (1, 255, 255), -1)
-                cv.putText(img, str(i + 1), (x + 10, y + 5), cv.FONT_HERSHEY_SIMPLEX, 0.7, 2, 1)
-
-        if self.path:
-            for i in range(len(self.path) - 1):
-                p1 = self.graph_points[self.path[i]]
-                p2 = self.graph_points[self.path[i + 1]]
-
-                cv.line(img, p1, p2, (1, 255, 1), 2)
-
-        cv.imshow(wnd_name, img)
+        return img
 
 
     def _find_graph_points(self):
@@ -124,6 +57,9 @@ class Graph():
 
         # collision map
         map = np.zeros((m ,n), dtype=np.int8)
+
+        # initial points of the graph
+        self.graph_points = [self.start_xy, self.target_xy]
 
         # set collision map 
         for j in range(m - 1):
@@ -148,7 +84,30 @@ class Graph():
                     func(j, i, +1, +1)
                     func(j, i, +1, -1)
 
+        # compute graph of distances between graph_points
         self._find_distances()
+
+
+    def _find_distances(self):
+        """
+        на основе списка точек
+        составить граф расстояний self.graph
+        """
+        if not self.graph_points:
+            return
+        
+        n_points = len(self.graph_points)
+
+        self.graph = np.zeros((n_points, n_points), dtype=np.uint16)
+
+        for j in range(0, n_points):
+            for i in range(j+1, n_points):
+                x0, y0 = self.graph_points[j]
+                xk, yk = self.graph_points[i]
+
+                if not self._line_cross_collision(x0, y0, xk, yk):
+                    dist = sqrt((x0 - xk)**2 + (y0 - yk)**2)
+                    self.graph[j, i] = self.graph[i, j] = int(dist)
 
 
     def _line_cross_collision(self, x0, y0, xk, yk):
@@ -207,28 +166,6 @@ class Graph():
                 print('{:^3}'.format(self.graph[j, i]), end=' ')
             print()
 
-
-    def _find_distances(self):
-        """
-        на основе списка точек
-        составить граф расстояний self.graph
-        """
-        if not self.graph_points:
-            return
-        
-        n_points = len(self.graph_points)
-
-        self.graph = np.zeros((n_points, n_points), dtype=np.uint16)
-
-        for j in range(0, n_points):
-            for i in range(j+1, n_points):
-                x0, y0 = self.graph_points[j]
-                xk, yk = self.graph_points[i]
-
-                if not self._line_cross_collision(x0, y0, xk, yk):
-                    dist = sqrt((x0 - xk)**2 + (y0 - yk)**2)
-                    self.graph[j, i] = self.graph[i, j] = int(dist)
-
         
     def _find_path(self):
         """
@@ -250,25 +187,25 @@ class Graph():
         i = 0
         path = []
         while i < len(queue):
-                q = queue[i]
-                for v in range(n_points):
-                    if q != v and self.graph[q, v] and dists[v] > dists[q] + self.graph[q, v]:
-                        dists[v] = dists[q] + self.graph[q, v]
-                        path.append((q, v))
-                        queue.append(v)
-                i += 1
+            q = queue[i]
+            for v in range(n_points):
+                if q != v and self.graph[q, v] and dists[v] > dists[q] + self.graph[q, v]:
+                    dists[v] = dists[q] + self.graph[q, v]
+                    path.append((q, v))
+                    queue.append(v)
+            i += 1
 
         # find the optimal path
         if dists[1] == 5000:
-            self.path = None
+            return []
             print('No path exists')
 
         d = 1
-        self.path = [1]
+        self.path = [self.target_xy]
         for i in range(len(path)):
             p1, p2 = path[-i-1]
             if p2 == d:
-                self.path.append(p1)
+                self.path.append(self.graph_points[p1])
                 if p1 == 0:
                     break
                 else:
@@ -277,98 +214,44 @@ class Graph():
         self.path.reverse()
 
 
-    def set_img(self, img, start_point, target_point):
-        """
-        :param img: 2-D numpy array (h, w, 3)
-        :param start_point: (x, y)
-        :param end_point: (x, y)
-        """
-        if len(img.shape) == 2:
-            self.h, self.w = img.shape
-            self.img = 255*np.ones((self.h, self.w, 3), dtype=np.uint8)
-            self.img[img == 0] = (0, 0, 0)
-
-        self.graph_points = [start_point, target_point]
-
-
-    def load_img(self, img_path, start_point, target_point):
-        """
-        :param img_path: path/to/img
-        :param start_point: (x, y)
-        :param end_point: (x, y)
-        """
-        img = cv.imread(img_path, 0)
-        np.where(img < 127, 0, 255)
-
-        self.h, self.w = img.shape
-        self.img = 255*np.ones((self.h, self.w, 3), dtype=np.uint8)
-        self.img[img == 0] = (0, 0, 0)
-
-        self.graph_points = [start_point, target_point]
-
-
-    def get_path(self, array=True):
-        """
-        get global path
-        :return path: 2-D array (Npoints, 2coords) if array
-                      else
-                      list of (x_i, y_i)
-        """
-        n = len(self.path)
-        if self.path is None or n < 2:
-            print('Path is undefined. Use planner')
-
-        path = []
-        for j in self.path:
-            p = self.graph_points[j]
-            path.append(p)
-        
-        if array:
-            array_path = np.empty((n, 2), dtype=np.int16)
-            for i, (x, y) in enumerate(path):
-                array_path[i][0] = x
-                array_path[i][1] = y
-            return array_path
-        
-        return path
-
-
     def planner(self, print_graph=False):
         """
         path planner in Visibility Graph
         :param print_graph: whether to print matrix of distances
         """
-        if self.img is None:
-            raise Exception('No collision map. Use draw_img()')
+        check_message = self._check_input_data()
+        if check_message != 'OK':
+            raise Exception(check_message)
 
-        if len(self.graph_points) < 2:
+        if not (self.start_xy and self.target_xy):
             raise Exception('No start/end points. Use draw_img()')
 
+        # 1
         self._find_graph_points()
 
         if print_graph:
+            # for debug
             self._show_graph()
 
+        # 2
         self._find_path()
 
 
 if __name__ == '__main__':
-    test = Graph()
+    test = Graph(grid_size=50)
 
     # 1
-    start_point = (10, 10)
-    target_point = (400, 400)
-    test.load_img('map.jpg', start_point, target_point)
+    #test.draw_img()
 
-    # 2
-    test.draw_img()
-
+    test.load_img('maps/0_(60,140)_(660,400).jpg', (60,140), (660,400))
+    
     # Time measure for algorigthm
     now = datetime.now()
-    test.planner()
+    test.planner(print_graph=False)
     print(datetime.now() - now)
 
-    test.show_img('wnd', grid=False)
+    test.show_img(grid=True, path=True)
 
+    print('S =', int(test.get_len_path()))
     cv.waitKey(0)
     cv.destroyAllWindows()

@@ -129,7 +129,7 @@ catkin_package(
     EIGEN3
 )
 
-catkin_install_python(PROGRAMS scripts/radial.py
+catkin_install_python(PROGRAMS scripts/radial.py scripts/planner.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 ###########
