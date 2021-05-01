@@ -32,3 +32,4 @@ else
                --privileged \
                --name diploma-project diploma-project-img
 fi
+
