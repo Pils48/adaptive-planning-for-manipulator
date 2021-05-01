@@ -34,5 +34,5 @@ void ConfigurationSpace::addCollision(const vector<tf::Vector3> &trivial_collisi
     auto chain = solver->getSimplifiedLinksChain(*joint_model_group);
     vector<double> links_length;
     transform(chain.begin(), chain.end(), back_inserter(links_length), &getLinkLength);
-    solver->solveExpandIK(trivial_collisions, links_length, true);
+    solver->solveExpandIK(trivial_collisions, links_length, false);
 }
