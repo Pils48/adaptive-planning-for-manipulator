@@ -10,47 +10,49 @@ class Planner():
     def __init__(self):
         pass
     
-    def draw_img(self):
+    def draw_img(self, contours_only=False):
         """
         drawing start point (R button)
                 end point (R button)
                 collision (L button)
         """
-        isDrawing = False
-        isStart = True
-        isTarget = False
-        switch = False
+        class context:
+            isDrawing = False
+            isStart = True
+            isTarget = False
+            switch = False
+            
         point_size = 5
         # --------------------------------------------------------
         def painter(event, x, y, flags, param):
-            # nonlocal isDrawing, isStart, isTarget, switch
             if event == cv.EVENT_LBUTTONDOWN:
-                isDrawing = True
+                context.isDrawing = True
                 cv.circle(img, (x,y), point_size, (0, 0, 0), -1)
 
             if event == cv.EVENT_MOUSEMOVE:
-                if isDrawing == True:
+                if context.isDrawing == True:
                     cv.circle(img, (x,y), point_size, (0, 0, 0), -1)
 
             if event == cv.EVENT_LBUTTONUP:
-                isDrawing = False
+                context.isDrawing = False
                 cv.circle(img, (x,y), point_size, (0, 0, 0), -1)
 
             if event == cv.EVENT_RBUTTONDOWN:
-                if isStart:
+                if context.isStart:
                     cv.circle(img, (x,y), 10, (255, 1, 1), -1)
                     self.start_xy = (x, y)
-                    isStart = False
-                    switch = True
-                if isTarget:
+                    context.isStart = False
+                    context.switch = True
+                    
+                if context.isTarget:
                     cv.circle(img, (x,y), 10, (1, 1, 255), -1)
                     self.target_xy = (x, y)
-                    isTarget = False
-                    switch = False
+                    context.isTarget = False
+                    context.switch = False
 
             if event == cv.EVENT_RBUTTONUP:
-                if switch:
-                    isTarget = True   
+                if context.switch:
+                    context.isTarget = True   
 
         #-----------------------------------
         img = 255*np.ones((self.h, self.w, 3), dtype=np.uint8)
@@ -64,43 +66,68 @@ class Planner():
                 if not (self.start_xy and self.target_xy):
                     print('Set start/target point!')
                 else:
-                    self.img = img
                     break
+        
+        self.img = 255*np.ones((self.h, self.w, 3), dtype=np.uint8)
+        
+        if contours_only:
+            img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+            _, img = cv.threshold(img, 0, 255, cv.THRESH_BINARY)
+            # find contours
+            contours, _ = cv.findContours(image=img, mode=cv.RETR_TREE, method=cv.CHAIN_APPROX_SIMPLE)
+            cv.drawContours(image=self.img, contours=contours, contourIdx=-1, color=(0, 0, 0), thickness=1)
+        else:
+            img[img > 0] = 255
+            self.img = img
 
         cv.destroyAllWindows()
 
 
-    def load_img(self, img_path, start_point, target_point):
+    def load_img(self, img_path, start_point, target_point, contours_only=False):
         """
         :param img_path: path/to/img
         :param start_point: (x, y)
         :param end_point: (x, y)
         """
         img = cv.imread(img_path, 0)
-        img = np.where(img < 127, 0, 255)
 
+        _, img = cv.threshold(img, 127, 255, cv.THRESH_BINARY)
         self.h, self.w = img.shape
         self.img = 255*np.ones((self.h, self.w, 3), dtype=np.uint8)
-        self.img[img == 0] = (0, 0, 0)
+
+        if contours_only:
+            contours, _ = cv.findContours(image=img, mode=cv.RETR_TREE, method=cv.CHAIN_APPROX_SIMPLE)
+            cv.drawContours(image=self.img, contours=contours, contourIdx=-1, color=(0, 0, 0), thickness=1)
+        else:    
+            self.img[img == 0] = (0, 0, 0)
 
         self.start_xy = start_point
-        assert img[start_point[1], start_point[0]] == 255, \
+        assert self.img[start_point[1], start_point[0], 0] == 255, \
             'Start point must be on non-collision point'
 
         self.target_xy = target_point
-        assert img[target_point[1], target_point[0]] == 255, \
+        assert self.img[target_point[1], target_point[0], 0] == 255, \
             'Target point must be on non-collision point'
 
 
-    def set_img(self, img, start_point, target_point):
+    def set_img(self, img, start_point, target_point, contours_only=False):
         """
-        :param img: 2-D numpy array (h, w, 3)
+        :param img: numpy array (h, w, 3)-BGR or (h, w)-GRAY
         :param start_point: (x, y)
         :param end_point: (x, y)
         """
-        if len(img.shape) == 2:
-            self.h, self.w = img.shape
-            self.img = 255*np.ones((self.h, self.w, 3), dtype=np.uint8)
+        if len(img.shape) == 3:
+            img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+
+        img = _, img = cv.threshold(img, 127, 255, cv.THRESH_BINARY)
+
+        self.h, self.w = img.shape
+        self.img = 255*np.ones((self.h, self.w, 3), dtype=np.uint8)
+
+        if contours_only:
+            contours, _ = cv.findContours(image=img, mode=cv.RETR_TREE, method=cv.CHAIN_APPROX_SIMPLE)
+            cv.drawContours(image=self.img, contours=contours, contourIdx=-1, color=(0, 0, 0), thickness=1)
+        else:    
             self.img[img == 0] = (0, 0, 0)
 
         self.start_xy = start_point
@@ -112,14 +139,13 @@ class Planner():
             'Target point must be on non-collision point'
 
 
-    def show_img(self, title='img', grid=True, path=True, save_name=None):
+    def _get_img(self, grid=False, path=True):
         """
         :param grid: whether to plot grid
         :param path: whether to plot path between start-target
-        :param save_name: path to save img. If None, without saving
         """
         img = self.img.copy()
-        
+
         # draw grid
         if grid:
             img = self._plot_grid(img)
@@ -136,10 +162,19 @@ class Planner():
         cv.circle(img, self.start_xy, 10, (255, 1, 1), -1)
         cv.circle(img, self.target_xy, 10, (1, 1, 255), -1)
 
+        return img
+            
+    
+    def show_img(self, title='img', grid=False, path=True):
+        img = self._get_img(grid, path)
+        
         cv.imshow(title, img)
-
-        if save_name is not None:
-            cv.imwrite(save_name, img)
+        
+        
+    def save_img(self, title='img', grid=False, path=True):
+        img = self._get_img(grid, path)
+        
+        cv.imwrite(title + '.jpg', img)
 
 
     def get_path(self, array=True):
