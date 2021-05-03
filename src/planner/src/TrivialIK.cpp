@@ -114,7 +114,7 @@ void TrivialIK::solveExpandIK(
 
     plt::title("Image of the obstacle");
     plt::figure_size(FIGURE_WIDTH, FIGURE_HEIGHT);
-    plt::grid(true);
+    // plt::grid(true);
     plt::xlim(PLOT_X_LOWER_LIMIT, PLOT_X_UPPER_LIMIT);
     plt::ylim(PLOT_Y_LOWER_LIMIT, PLOT_Y_UPPER_LIMIT);
 

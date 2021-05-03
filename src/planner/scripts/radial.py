@@ -298,10 +298,11 @@ def callback(data):
     test.planner(debug=False)
     # print(datetime.now() - now)
     # test.show_img('final', grid=True, path=True)
+    buff = []
     for state in test.path:
-        rospy.loginfo((state[0] - pixel_origin[0]) * pi / 800)
-        rospy.loginfo((state[1] - pixel_origin[1]) * pi / 600)
-    msg = Float64MultiArray(data = test.path)
+        buff.append(state[0])
+        buff.append(state[1]) #Could be 2-D?
+    msg = Float64MultiArray(data = buff)
     pub.publish(msg)
     # cv.waitKey(0)
     # cv.destroyAllWindows()

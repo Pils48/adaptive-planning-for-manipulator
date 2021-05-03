@@ -1,0 +1,9 @@
+<launch>
+
+  <node name="controller_node" 
+        pkg="controller" 
+        type="controller_node"
+        respawn="false" output="screen">
+  </node>
+
+</launch>
