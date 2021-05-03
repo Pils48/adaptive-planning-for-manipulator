@@ -16,6 +16,8 @@ constexpr auto PLOT_X_LOWER_LIMIT = -M_PI;
 constexpr auto PLOT_X_UPPER_LIMIT = M_PI;
 constexpr auto PLOT_Y_LOWER_LIMIT = -M_PI;
 constexpr auto PLOT_Y_UPPER_LIMIT = M_PI;
+constexpr auto FIGURE_WIDTH = 800;
+constexpr auto FIGURE_HEIGHT = 600;
 
 using Solutions = std::vector<std::vector<double>>;
 

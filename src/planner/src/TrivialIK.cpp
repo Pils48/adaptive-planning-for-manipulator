@@ -111,12 +111,12 @@ void TrivialIK::solveExpandIK(
     {
         ROS_INFO("link_length: %f", link_length);
     }
-    if (show)
-    {
-        plt::title("Image of the obstacle");
-        plt::xlim(PLOT_X_LOWER_LIMIT, PLOT_X_UPPER_LIMIT);
-        plt::ylim(PLOT_Y_LOWER_LIMIT, PLOT_Y_UPPER_LIMIT);
-    }
+
+    plt::title("Image of the obstacle");
+    plt::figure_size(FIGURE_WIDTH, FIGURE_HEIGHT);
+    plt::grid(true);
+    plt::xlim(PLOT_X_LOWER_LIMIT, PLOT_X_UPPER_LIMIT);
+    plt::ylim(PLOT_Y_LOWER_LIMIT, PLOT_Y_UPPER_LIMIT);
 
     //Setting up solver params
     vector<double> x_front, y_front, x_back, y_back; 

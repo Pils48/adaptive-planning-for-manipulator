@@ -15,8 +15,8 @@ int main(int argc, char *argv[])
 {   
     ros::init(argc, argv, "configuration_space_node");
     ros::NodeHandle node;
-    // ros::AsyncSpinner spinner(1);
-    // spinner.start();
+    ros::AsyncSpinner spinner(1);
+    spinner.start();
     ROS_INFO("configuration_space_node started");
     
     //Init configuration space
