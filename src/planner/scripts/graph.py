@@ -5,13 +5,23 @@ from datetime import datetime
 from planner import Planner
 from math import sqrt
 
+class Node:
+    def __init__(self, id):
+        self.id = id        # number of graph point
+        self.prev = None    # previous node
+        self.h = None       # empirical score
+        self.d = 5000       # dist from start
+        self.f = None       # d + h
+
+
 class Graph(Planner):
-    def __init__(self, w=800, h=600, grid_size=20):
+    def __init__(self, w=800, h=600, grid_size=20, path_finder='Astar'):
         """
         :param w: window width - pixels
         :param h: window height - pixels
         :param delta_r: radius step - pixels
         :param delta_fi: angle step - degrees
+        :param path_finder: 'Astar' (default) or 'Dijkstra'
         """
         self.gs = grid_size
         self.w = w
@@ -29,6 +39,13 @@ class Graph(Planner):
         self.start_xy = self.target_xy = None
         
         self.img = None
+
+        if path_finder == 'Astar':
+            self.find_path = self._Astar_finder
+        elif path_finder == 'Dijkstra':
+            self.find_path = self._Dijkstra_finder
+        else:
+            raise Exception('Invalid path finder: {}'.format(path_finder))
 
 
     def _plot_grid(self, img):
@@ -80,7 +97,10 @@ class Graph(Planner):
                         if map[j + dj, i] == 0 and map[j, i + di] == 0:
                             i = i+1 if di > 0 else i
                             j = j+1 if dj > 0 else j
-                            self.graph_points.append( (i * self.gs, j * self.gs) )
+
+                            x, y = i * self.gs, j * self.gs
+                            if (x, y) != self.start_xy and (x, y) != self.target_xy:
+                                self.graph_points.append( (x, y) )
 
                     func(j, i, -1, +1)
                     func(j, i, -1, -1)
@@ -119,6 +139,7 @@ class Graph(Planner):
         cross the collision in self.img
         :return: bool
         """
+
         if x0 == xk and y0 == yk:
             return self.img[y0, x0, 0] == 0
 
@@ -140,6 +161,7 @@ class Graph(Planner):
 
             # x = b_a * y + c_a
 
+            y0, yk = min(y0, yk), max(y0, yk)
             for y in range(y0, yk + 1):
                 x = int(b_a * y + c_a)
 
@@ -170,7 +192,7 @@ class Graph(Planner):
             print()
 
         
-    def _find_path(self):
+    def _Dijkstra_finder(self):
         """
         By means of Dijkstra's algorithm
         find the optimal path in self.graph
@@ -221,6 +243,72 @@ class Graph(Planner):
         self.path.reverse()
 
 
+    def _Astar_finder(self):
+        """
+        """
+        if self.graph is None:
+            raise Exception('Graph is not defined')
+        n_points = self.graph.shape[0]
+
+        # create list of Nodes for each graph points
+        nodes = [Node(i) for i in range(n_points)]
+        # dist from start to start
+        nodes[0].d = 0
+
+        # empirical function - dist to target point
+        (xk, yk) = self.graph_points[1]
+        for i in range(1, n_points): # except start point
+            (x, y) = self.graph_points[i]
+            d = sqrt((xk - x)**2 + (yk - y)**2)
+            nodes[i].h = d
+
+        # starting from start point
+        queue = [nodes[0]]
+
+        # nodes that were visited
+        closed_nodes = []
+
+        while queue and queue[0].id != 1:
+            node_start = queue[0]
+
+            for node in nodes:
+                d = self.graph[node_start.id, node.id]
+                if node not in closed_nodes and d > 0 and node.d > node_start.d + d:
+
+                    # dist from the start to this node
+                    node.d = node_start.d + d
+                    # key of priority
+                    node.f = node.d + node.h
+                    # save prev node
+                    node.prev = node_start
+
+                    queue.append(node)
+
+            # sort by node.f
+            queue = queue[1: ]
+            if queue:
+                queue.sort(key=lambda x: x.f)
+
+            closed_nodes.append(node_start)
+
+        if not queue:
+            print('No path exists')
+            return
+
+        node = queue[0]
+        path = []
+        while node is not None:
+            path.append(node.id)
+            node = node.prev
+
+        path.reverse()
+
+        self.path = []
+        for p in path:
+            (x, y) = self.graph_points[p]
+            self.path.append((x, y))
+
+
     def planner(self, print_graph=False):
         """
         path planner in Visibility Graph
@@ -241,7 +329,7 @@ class Graph(Planner):
             self._show_graph()
 
         # 2
-        self._find_path()
+        self.find_path()
 
 
 if __name__ == '__main__':
