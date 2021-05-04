@@ -10,6 +10,7 @@ add_compile_options(-std=c++17)
 find_package(catkin REQUIRED COMPONENTS
   moveit_core
   moveit_kinematics
+  moveit_visual_tools
   rviz_visual_tools
   roscpp
   std_msgs
