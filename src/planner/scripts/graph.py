@@ -1,3 +1,4 @@
+from __future__ import print_function
 import cv2 as cv
 import numpy as np
 from datetime import datetime
@@ -64,8 +65,10 @@ class Graph(Planner):
         # set collision map 
         for j in range(m - 1):
             for i in range(n - 1):
-                x, y = i * self.gs, j * self.gs
-                roi = self.img[y : y + self.gs, x : x + self.gs]
+                x0, y0 = i * self.gs, j * self.gs
+                x, y = x0 + self.gs, y0 + self.gs
+                roi = self.img[y0 : y , x0 : x]
+                
                 if np.any(roi == 0):
                     map[j, i] = 1
         
@@ -90,8 +93,8 @@ class Graph(Planner):
 
     def _find_distances(self):
         """
-        на основе списка точек
-        составить граф расстояний self.graph
+        based on graph points
+        bulid distance graph - self.graph
         """
         if not self.graph_points:
             return
@@ -121,11 +124,10 @@ class Graph(Planner):
 
         # ax + by + c = 0
         if x0 != xk:
-            a_b = (y0 - yk) / (x0 - xk)
+            a_b = 1.0*(y0 - yk) / (x0 - xk)
             c_b = - a_b * x0 + y0
             
             # y = a_b * x + c_b
-            #print('y = {:.2f}*x + {:.2f}'.format(a_b, c_b))
 
             x0, xk = min(x0, xk), max(x0, xk)
             for x in range(x0, xk + 1):
@@ -133,7 +135,7 @@ class Graph(Planner):
                 if self.img[y, x, 0] == 0:
                     return True
         else:
-            b_a = (x0 - xk) / (y0 - yk)
+            b_a = 1.0*(x0 - xk) / (y0 - yk)
             c_a = - b_a * y0 + x0
 
             # x = b_a * y + c_a
@@ -154,6 +156,7 @@ class Graph(Planner):
         assert self.graph is not None
 
         n = self.graph.shape[0]
+        
         # title
         print('    ', end='')
         for i in range(n):
@@ -176,23 +179,27 @@ class Graph(Planner):
             raise Exception('Graph is not defined')
         n_points = self.graph.shape[0]
 
-        # на очереди первая (стартовая) вершина
+        # the first point on the queue - start point
         queue = [0]
 
-        # расстояния от первой вершины до всех остальных
+        # dist btwn start point and others
         dists = 5000 * np.ones(n_points, dtype=np.uint16)
         dists[0] = 0
 
-        # построение пути
+        # building path
         i = 0
         path = []
-        while i < len(queue):
+        while i < len(queue) and dists[1] == 5000:
             q = queue[i]
             for v in range(n_points):
+                # 1) if q and v are not same points
+                # 2) path btwn q and v exists
+                # 3) path btwn q and v is optimal
                 if q != v and self.graph[q, v] and dists[v] > dists[q] + self.graph[q, v]:
                     dists[v] = dists[q] + self.graph[q, v]
                     path.append((q, v))
                     queue.append(v)
+            
             i += 1
 
         # find the optimal path

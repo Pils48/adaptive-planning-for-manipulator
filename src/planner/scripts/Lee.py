@@ -145,7 +145,6 @@ class Lee(Planner):
                 break
 
         if step <= MAX_step:
-            print('Steps:', step)
             self._find_path()
         else:
             print('No path exists')
