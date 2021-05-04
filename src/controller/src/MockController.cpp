@@ -13,14 +13,10 @@ std::vector<std::vector<double>> interpolate(
     std::vector<std::vector<double>> result_path;
     std::vector<double> steps_vector;
     for (size_t i = 0; i < initial_state.size(); ++i)
-    {
-        steps_vector.push_back(abs(final_state[i] - initial_state[i]) / INTERPOLATION_STEP); //Alex mentioned that emplace is better
+    {   
+        steps_vector.push_back(std::abs(final_state[i] - initial_state[i]) / INTERPOLATION_STEP); //Alex mentioned that emplace is better
     }
-    for (const auto step : steps_vector)
-    {
-        ROS_INFO("Number of steps: %f", step);
-    }
-    size_t steps = *std::max(steps_vector.begin(), steps_vector.end());
+    size_t steps = std::round(*std::max_element(steps_vector.begin(), steps_vector.end()));
     ROS_INFO("Number of steps: %lu", steps);
     for (size_t i = 1; i <= steps; ++i)
 	{
@@ -61,7 +57,6 @@ void MockController::animationCallback(const std_msgs::Float64MultiArray &trajec
     const auto joints_number = joint_model_group_ptr->getActiveJointModels().size();
     for (size_t i = 0; i < trajectory_states.data.size() - joints_number; i += joints_number)
     {
-        // ROS_INFO("Get here???");
         std::vector<double> initial_state;
         std::vector<double> final_state;
         auto form_joints_vector = 
@@ -70,7 +65,7 @@ void MockController::animationCallback(const std_msgs::Float64MultiArray &trajec
             std::vector<double> joints;
             for (size_t j = 0; j < joints_number; ++j)
             {
-                ROS_INFO("Joint: %f", trajectory_states.data[index + j]);
+                ROS_DEBUG("Joint: %f", trajectory_states.data[index + j]);
                 joints.push_back(trajectory_states.data[index + j]);
             }
             return joints;
@@ -80,10 +75,11 @@ void MockController::animationCallback(const std_msgs::Float64MultiArray &trajec
         auto path = interpolate(initial_state, final_state);
         for (const auto &waypoint : path)
         {
-            ROS_INFO("Waypoint: {%f, %f}", waypoint[0], waypoint[1]);
-           _kinematic_state.setJointGroupPositions("manipulator", waypoint.data());
+            ROS_DEBUG("Waypoint: {%f, %f}", waypoint[0], waypoint[1]);
+           _kinematic_state.setVariablePositions(waypoint);
            _kinematic_state.update(true);
-           _visual_tools.publishRobotState(_kinematic_state, rvt::colors::BLUE); 
+           _visual_tools.publishRobotState(_kinematic_state, rvt::colors::BLUE);
+           std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }
 }

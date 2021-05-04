@@ -7,6 +7,10 @@
 #include "ros/ros.h"
 #include "std_msgs/Float64MultiArray.h"
 
+#include <cmath>
+#include <chrono>
+#include <thread>
+
 
 constexpr double INTERPOLATION_STEP = 0.001;
 
