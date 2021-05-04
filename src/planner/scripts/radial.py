@@ -300,8 +300,8 @@ def callback(data):
     # test.show_img('final', grid=True, path=True)
     buff = []
     for state in test.path:
-        buff.append(state[0])
-        buff.append(state[1]) #Could be 2-D?
+        buff.append((state[0] - pixel_origin[0]) * pi / 800)
+        buff.append((state[1] - pixel_origin[1]) * pi / 600) #Could be 2-D?
     msg = Float64MultiArray(data = buff)
     pub.publish(msg)
     # cv.waitKey(0)
