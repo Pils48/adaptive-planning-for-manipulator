@@ -8,7 +8,7 @@ from planner import Planner
 import os
 
 import rospy
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, Float64MultiArray
 
 class Radial(Planner):
     def __init__(self, w=800, h=600, delta_r=30, delta_fi=10):
@@ -287,7 +287,9 @@ def callback(data):
     start_point = (150, 150)
     target_point = (400, 100)
     img = cv.imread('test_plot.jpg', 0)
-    crop_img = img[67:530, 108:706]
+    crop_img = img[Y_CROP_LOWER_BOARD:Y_CROP_UPPER_BOARD, X_CROP_LOWER_BOARD:X_CROP_UPPER_BOARD]
+    pixel_origin = (abs(X_CROP_UPPER_BOARD - X_CROP_LOWER_BOARD) / 2, abs(Y_CROP_UPPER_BOARD - Y_CROP_LOWER_BOARD) / 2)
+    cv.waitKey(0)
     cv.imwrite('test_plot_cropped.jpg', crop_img)
     test.load_img('test_plot_cropped.jpg', start_point, target_point)
     rospy.loginfo("Image is ready getting, searching for path...")
@@ -295,15 +297,27 @@ def callback(data):
     now = datetime.now()
     test.planner(debug=False)
     # print(datetime.now() - now)
-    test.show_img('final', grid=True, path=True)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    # test.show_img('final', grid=True, path=True)
+    buff = []
+    for state in test.path:
+        buff.append((state[0] - pixel_origin[0]) * pi / 800)
+        buff.append((state[1] - pixel_origin[1]) * pi / 600) #Could be 2-D?
+    msg = Float64MultiArray(data = buff)
+    pub.publish(msg)
+    # cv.waitKey(0)
+    # cv.destroyAllWindows()
 
+
+X_CROP_LOWER_BOARD = 125
+X_CROP_UPPER_BOARD = 690
+Y_CROP_LOWER_BOARD = 70
+Y_CROP_UPPER_BOARD = 530
 
 if __name__ == '__main__':
     #ros initialization
     rospy.init_node('planner_node', anonymous=True)
     rospy.Subscriber("space_ready_topic", Bool, callback)
+    pub = rospy.Publisher("animation_topic", Float64MultiArray, queue_size=100)
     rate = rospy.Rate(10) # 10hz
     while not rospy.is_shutdown():
         rate.sleep()
