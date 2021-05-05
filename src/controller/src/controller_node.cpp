@@ -8,7 +8,6 @@
 #include "MockController.h"
 
 
-
 int main(int argc, char *argv[])
 {   
     ros::init(argc, argv, "controller_node");

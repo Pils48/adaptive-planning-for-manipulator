@@ -1,5 +1,6 @@
 #include "MockController.h"
 
+
 std::vector<std::vector<double>> interpolate(
     const std::vector<double> &initial_state,
     const std::vector<double> &final_state
