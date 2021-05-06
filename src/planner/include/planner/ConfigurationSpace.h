@@ -24,13 +24,10 @@ class ConfigurationSpace
 public:
     ConfigurationSpace(
         std::string robot_description,
-        std::vector<tf::Vector3> trivial_collisions
-    );
+        std::vector<tf::Vector3> trivial_collisions);
 
     ConfigurationSpace(
-        std::string robot_description,
-        std::vector<shapes::ShapePtr> objects
-    );
+        std::string robot_description);
 
     ~ConfigurationSpace() = default;
 
@@ -40,6 +37,8 @@ public:
 
     void addCollision(const std::vector<CollisionObject> &collision_objects);
 
+    void loadCollisionObjects();
+
 private:
     ros::NodeHandle _nh;
     ros::Publisher _space_ready_pub;
@@ -48,5 +47,6 @@ private:
     moveit::core::RobotModelPtr _robot_model;
     ros::Rate _rate = ros::Rate(10);
     std::vector<tf::Vector3> _trivial_collisions;
-    std::vector<shapes::ShapePtr> _collision_objects;
+    std::vector<CollisionObject> _collision_objects;
+    std::string _collision_objects_dir;
 };

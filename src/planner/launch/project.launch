@@ -1,5 +1,7 @@
 <launch>
 
+  <arg name="collision_objects_dir" default=""/>
+
   <arg name="rviz_tutorial" default="false" />
 
   <!-- By default, we are not in debug mode -->
@@ -20,7 +22,9 @@
     <arg name="rviz_tutorial" value="$(arg rviz_tutorial)"/>
   </include>
 
-  <include file="$(find planner)/launch/configuration_space.launch"/>
+  <include file="$(find planner)/launch/configuration_space.launch"> 
+    <arg name="collision_objects_dir" value="$(arg collision_objects_dir)"/>
+  </include>
 
   <include file="$(find controller)/launch/controller_node.launch"/>
 

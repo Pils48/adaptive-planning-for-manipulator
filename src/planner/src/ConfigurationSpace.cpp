@@ -10,6 +10,9 @@
 #include "ConfigurationSpace.h"
 #include "Solver.h"
 
+//boost
+#include <boost/filesystem.hpp>
+
 
 using namespace std;
 using namespace moveit::core;
@@ -27,13 +30,23 @@ ConfigurationSpace::ConfigurationSpace
     waitForSubscribers(_space_ready_pub, 1);
     _planning_scene_diff_pub = _nh.advertise<moveit_msgs::PlanningScene>("planning_scene", 100);
     waitForSubscribers(_planning_scene_diff_pub, 1);
+
+    if (_nh.hasParam("/configuration_space_node/collision_objects_dir"))
+    {
+        _nh.param("/configuration_space_node/collision_objects_dir", _collision_objects_dir, string{""});
+    }
+    else
+    {
+        ROS_WARN("Unspesified directory for collision objects");
+    }
+    ROS_INFO("Set directory for collision objects: %s", _collision_objects_dir.c_str());
+    loadCollisionObjects();
     addCollision(trivial_collisions);
 }
 
 ConfigurationSpace::ConfigurationSpace
 (
-    std::string robot_description,
-    std::vector<shapes::ShapePtr> objects
+    std::string robot_description
 )
     : _robot_model_loader(robot_description)
     , _robot_model(_robot_model_loader.getModel())
@@ -42,7 +55,18 @@ ConfigurationSpace::ConfigurationSpace
     waitForSubscribers(_space_ready_pub, 1);
     _planning_scene_diff_pub = _nh.advertise<moveit_msgs::PlanningScene>("planning_scene", 100);
     waitForSubscribers(_planning_scene_diff_pub, 1);
-    _collision_objects.insert(_collision_objects.end(), objects.begin(), objects.end());
+    // _collision_objects.insert(_collision_objects.end(), objects.begin(), objects.end());
+
+    if (_nh.hasParam("/configuration_space_node/collision_objects_dir"))
+    {
+        _nh.param("/configuration_space_node/collision_objects_dir", _collision_objects_dir, string{""});
+    }
+    else
+    {
+        ROS_WARN("Unspesified directory for collision objects");
+    }
+    ROS_INFO("Set directory for collision objects: %s", _collision_objects_dir.c_str());
+    loadCollisionObjects();
 }
 
 void ConfigurationSpace::spin()
@@ -87,8 +111,8 @@ void ConfigurationSpace::addCollision(
         addCollision(verticies); //Add collision on map
         _trivial_collisions.insert(_trivial_collisions.end(), verticies.begin(), verticies.end()); //add to trivial_collision and add observer
         moveit_msgs::CollisionObject collision_object_msg;
-        geometry_msgs::Pose pose_msg;
         collision_object_msg.id = collision_object.id;
+        collision_object_msg.header.frame_id = "base_link";
         shape_msgs::Mesh mesh;
         shapes::ShapeMsg mesh_msg;
         shapes::constructMsgFromShape(collision_object.shape, mesh_msg);
@@ -105,4 +129,33 @@ void ConfigurationSpace::addCollision(
     _planning_scene_diff_pub.publish(planning_scene);
     ROS_INFO("%lu objects have been added to scene", collision_objects.size());
     sleep(5.0); 
+}
+
+void ConfigurationSpace::loadCollisionObjects()
+{
+    boost::filesystem::path dir(_collision_objects_dir);
+    if (!boost::filesystem::is_directory(dir))
+    {
+        ROS_ERROR("collision_objects_dir is not a directory!");
+        throw std::runtime_error("collision_objects_dir is not a directory!");
+    }
+    
+    std::vector<string> co_filenames;
+    for (auto &entry : boost::filesystem::directory_iterator(dir))
+    {
+        ROS_INFO("Collision_object %s", entry.path().filename().c_str());
+        co_filenames.emplace_back(entry.path().generic_string());
+    }
+
+    //Hardcode alert!!!
+    for (const auto &abs_filename : co_filenames)
+    {
+        shapes::Mesh *mesh = shapes::createMeshFromResource("file://" + abs_filename);//leak??
+        shapes::ShapePtr shape_ptr(mesh);
+        tf::Transform collision_object_pose(tf::Quaternion(1, 0, 0, 0), tf::Vector3(100, 0, -5.5)); //Hardcode
+        CollisionObject collision_object {"first_object", mesh, collision_object_pose}; //Hardcode
+        addCollision(vector<CollisionObject>{collision_object});
+        _collision_objects.emplace_back(collision_object);
+    }
+    
 }
