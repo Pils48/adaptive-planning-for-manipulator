@@ -114,7 +114,7 @@ void ConfigurationSpace::addCollision(
         auto verticies = pointsFromRawData(collision_object.shape->vertices, collision_object.shape->vertex_count, collision_object.pose);
         for (const auto &vertex : verticies)
         {
-            ROS_INFO("Vertex: %f %f %f", vertex.getX(), vertex.getY(), vertex.getZ());
+            ROS_DEBUG("Vertex: %f %f %f", vertex.getX(), vertex.getY(), vertex.getZ());
         }
         addCollision(verticies); //Add collision on map
         _trivial_collisions.insert(_trivial_collisions.end(), verticies.begin(), verticies.end()); //add to trivial_collision and add observer
