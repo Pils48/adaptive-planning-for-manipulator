@@ -18,7 +18,7 @@
     <arg name="pipeline" value="$(arg pipeline)"/>
   </include> -->
 
-  <include file="$(find robots)/2_dof_robot/launch/2_dof_robot.launch">
+  <include file="$(find robots)/3_dof_robot/launch/3_dof_robot.launch">
     <arg name="rviz_tutorial" value="$(arg rviz_tutorial)"/>
   </include>
 

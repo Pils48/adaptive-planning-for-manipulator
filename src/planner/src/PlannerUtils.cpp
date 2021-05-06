@@ -18,7 +18,7 @@ double getLinkLength(const robot_model::LinkModel *link_model)
 {
     auto extents = link_model->getShapeExtentsAtOrigin();
     ROS_INFO("Shape extends, %s: %f %f %f", link_model->getName().c_str(), extents.x(), extents.y(), extents.z());
-    return extents.z() / 1000;
+    return extents.z();
 }
 
 std::vector<tf::Vector3> generateTestPointsArray(
@@ -63,7 +63,7 @@ void waitForSubscribers(const ros::Publisher &publisher, size_t subscribers_numb
     }
 }
 
-std::vector<tf::Vector3> pointsFromRawData(const double *data, const unsigned int data_count)
+std::vector<tf::Vector3> pointsFromRawData(const double *data, const unsigned int data_count, const tf::Transform &transform)
 {
     std::vector<tf::Vector3> result_vector;
     for (size_t i = 0; i < data_count; ++i)
@@ -72,6 +72,7 @@ std::vector<tf::Vector3> pointsFromRawData(const double *data, const unsigned in
         vector3.setX(*(data + (3 * i)));
         vector3.setY(*(data + (3 * i) + 1));
         vector3.setZ(*(data + (3 * i) + 2));
+        vector3 = transform * vector3;
         result_vector.push_back(vector3);
     }
     return result_vector;

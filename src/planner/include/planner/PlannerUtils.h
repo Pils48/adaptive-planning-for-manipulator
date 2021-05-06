@@ -23,4 +23,4 @@ geometry_msgs::Pose transformToMsg(const tf::Transform &transform);
 
 void waitForSubscribers(const ros::Publisher &publisher, size_t subscribers_number);
 
-std::vector<tf::Vector3> pointsFromRawData(const double *data, const unsigned int data_count);
+std::vector<tf::Vector3> pointsFromRawData(const double *data, const unsigned int data_count, const tf::Transform &transform);

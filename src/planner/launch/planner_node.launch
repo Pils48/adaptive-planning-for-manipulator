@@ -5,7 +5,7 @@
         type="radial.py"
         respawn="false" output="screen">
     <rosparam command="load"
-          file="$(find robots)/2_dof_robot/configs/kinematics.yaml"/>
+          file="$(find robots)/3_dof_robot/configs/kinematics.yaml"/>
   </node>
 
 </launch>

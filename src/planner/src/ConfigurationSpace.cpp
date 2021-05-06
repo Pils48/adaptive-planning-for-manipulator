@@ -26,6 +26,8 @@ ConfigurationSpace::ConfigurationSpace
     : _robot_model_loader(robot_description)
     , _robot_model(_robot_model_loader.getModel())
 {
+    ROS_INFO("Building configuration space...");
+    ROS_INFO("Model %s loaded", _robot_model->getName().c_str());
     _space_ready_pub = _nh.advertise<std_msgs::Bool>("space_ready_topic", 10);
     waitForSubscribers(_space_ready_pub, 1);
     _planning_scene_diff_pub = _nh.advertise<moveit_msgs::PlanningScene>("planning_scene", 100);
@@ -42,6 +44,10 @@ ConfigurationSpace::ConfigurationSpace
     ROS_INFO("Set directory for collision objects: %s", _collision_objects_dir.c_str());
     loadCollisionObjects();
     addCollision(trivial_collisions);
+
+    std_msgs::Bool is_ready;
+    is_ready.data = true; 
+    _space_ready_pub.publish(is_ready);
 }
 
 ConfigurationSpace::ConfigurationSpace
@@ -51,11 +57,12 @@ ConfigurationSpace::ConfigurationSpace
     : _robot_model_loader(robot_description)
     , _robot_model(_robot_model_loader.getModel())
 {
+    ROS_INFO("Building configuration space...");
+    ROS_INFO("Model %s loaded", _robot_model->getName().c_str());
     _space_ready_pub = _nh.advertise<std_msgs::Bool>("space_ready_topic", 10);
     waitForSubscribers(_space_ready_pub, 1);
     _planning_scene_diff_pub = _nh.advertise<moveit_msgs::PlanningScene>("planning_scene", 100);
     waitForSubscribers(_planning_scene_diff_pub, 1);
-    // _collision_objects.insert(_collision_objects.end(), objects.begin(), objects.end());
 
     if (_nh.hasParam("/configuration_space_node/collision_objects_dir"))
     {
@@ -67,18 +74,16 @@ ConfigurationSpace::ConfigurationSpace
     }
     ROS_INFO("Set directory for collision objects: %s", _collision_objects_dir.c_str());
     loadCollisionObjects();
+
+    std_msgs::Bool is_ready;
+    is_ready.data = true; 
+    _space_ready_pub.publish(is_ready);
 }
 
 void ConfigurationSpace::spin()
 {   
-    ROS_INFO("configuration_space_node started");
-    ROS_INFO("Model %s loaded", _robot_model->getName().c_str());
-    ROS_INFO("Building configuration space...");
     while(ros::ok())
     {
-        std_msgs::Bool is_ready;
-        is_ready.data = true;
-        // space_ready_pub.publish(is_ready);
         ros::spinOnce();
         _rate.sleep();
     }
@@ -88,14 +93,14 @@ void ConfigurationSpace::addCollision(const vector<tf::Vector3> &trivial_collisi
 {
     _trivial_collisions.insert(_trivial_collisions.end(), trivial_collisions.begin(), trivial_collisions.end());
     robot_state::RobotStatePtr kinematic_state(new robot_state::RobotState(_robot_model));
-    auto joint_model_group = kinematic_state->getJointModelGroup("manipulator");
+    auto joint_model_group = kinematic_state->getJointModelGroup("3_dof_manipulator");
     ROS_INFO("%s joint model group loaded", joint_model_group->getName().c_str());
 
     auto solver = createSolver(*joint_model_group);
     auto chain = solver->getSimplifiedLinksChain(*joint_model_group);
     vector<double> links_length;
     transform(chain.begin(), chain.end(), back_inserter(links_length), &getLinkLength);
-    solver->solveExpandIK(trivial_collisions, links_length, false);
+    solver->solveExpandIK(trivial_collisions, links_length, true);
 }
 
 void ConfigurationSpace::addCollision(
@@ -106,8 +111,11 @@ void ConfigurationSpace::addCollision(
     vector<moveit_msgs::CollisionObject> collision_objects_msgs;
     for(const auto &collision_object : collision_objects)
     {
-        // _collision_objects.push_back(ncollision_object.shape);
-        auto verticies = pointsFromRawData(collision_object.shape->vertices, collision_object.shape->vertex_count);
+        auto verticies = pointsFromRawData(collision_object.shape->vertices, collision_object.shape->vertex_count, collision_object.pose);
+        for (const auto &vertex : verticies)
+        {
+            ROS_INFO("Vertex: %f %f %f", vertex.getX(), vertex.getY(), vertex.getZ());
+        }
         addCollision(verticies); //Add collision on map
         _trivial_collisions.insert(_trivial_collisions.end(), verticies.begin(), verticies.end()); //add to trivial_collision and add observer
         moveit_msgs::CollisionObject collision_object_msg;
@@ -150,9 +158,9 @@ void ConfigurationSpace::loadCollisionObjects()
     //Hardcode alert!!!
     for (const auto &abs_filename : co_filenames)
     {
-        shapes::Mesh *mesh = shapes::createMeshFromResource("file://" + abs_filename);//leak??
+        shapes::Mesh *mesh = shapes::createMeshFromResource("file://" + abs_filename, Eigen::Vector3d{5, 5, 5});//leak??
         shapes::ShapePtr shape_ptr(mesh);
-        tf::Transform collision_object_pose(tf::Quaternion(1, 0, 0, 0), tf::Vector3(100, 0, -5.5)); //Hardcode
+        tf::Transform collision_object_pose(tf::Quaternion(0, 0, 1, 0), tf::Vector3(0, 80, 150)); //Hardcode
         CollisionObject collision_object {"first_object", mesh, collision_object_pose}; //Hardcode
         addCollision(vector<CollisionObject>{collision_object});
         _collision_objects.emplace_back(collision_object);
