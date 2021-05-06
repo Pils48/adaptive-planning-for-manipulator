@@ -1,8 +1,24 @@
 <launch>
 
+  <arg name="rviz_tutorial" default="false" />
+
+  <!-- By default, we are not in debug mode -->
+  <arg name="debug" default="false"/>
+  <arg name="pipeline" default="ompl"/>
+
   <include file="$(find planner)/launch/planner_node.launch"/>
   
-  <include file="$(find robots)/2_dof_robot/2_dof_robot.launch"/>
+  <!-- <include file="$(find robots)/2_dof_robot/launch/move_group.launch">
+    <arg name="allow_trajectory_execution" value="false"/>
+    <arg name="fake_execution" value="false"/>
+    <arg name="info" value="true"/>
+    <arg name="debug" value="$(arg debug)"/>
+    <arg name="pipeline" value="$(arg pipeline)"/>
+  </include> -->
+
+  <include file="$(find robots)/2_dof_robot/launch/2_dof_robot.launch">
+    <arg name="rviz_tutorial" value="$(arg rviz_tutorial)"/>
+  </include>
 
   <include file="$(find planner)/launch/configuration_space.launch"/>
 

@@ -18,3 +18,9 @@ std::vector<tf::Vector3> generateTestPointsArray(
     double y_0, double y_f, double y_step,
     double z_0, double z_f, double z_step
 );
+
+geometry_msgs::Pose transformToMsg(const tf::Transform &transform);
+
+void waitForSubscribers(const ros::Publisher &publisher, size_t subscribers_number);
+
+std::vector<tf::Vector3> pointsFromRawData(const double *data, const unsigned int data_count);
