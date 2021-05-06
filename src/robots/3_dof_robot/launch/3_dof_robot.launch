@@ -1,13 +1,21 @@
 <launch>
+
+    <arg name="rviz_tutorial" default="false" />
+    <arg unless="$(arg rviz_tutorial)" name="command_args" value="-d $(find robots)/common/rviz_configs/moveit.rviz" />
+    <arg     if="$(arg rviz_tutorial)" name="command_args" value="-d $(find robots)/common/rviz_configs/moveit_empty.rviz" /> 
+
     <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find robots)/3_dof_robot/configs/3_dof_robot.xacro'"/>
     
     <param name="robot_description_semantic" textfile="$(find robots)/3_dof_robot/configs/3_dof_robot_srdf.xacro" />
 
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
-    <node name="rviz" pkg="rviz" type="rviz"/>
+    
+    <node name="$(anon rviz)" pkg="rviz" type="rviz" respawn="false" args="$(arg command_args)" output="screen">
+        <rosparam command="load" file="$(find robots)/3_dof_robot/configs/kinematics.yaml"/>
+    </node>
     
     <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" >
-        <param name="use_gui" value="true"/>
+        <param name="use_gui" value="True"/>
     </node>
 
     <group ns="$robot_description_kinematics">

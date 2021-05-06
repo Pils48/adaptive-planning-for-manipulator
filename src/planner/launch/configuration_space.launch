@@ -1,11 +1,13 @@
 <launch>
 
+  <arg name="collision_objects_dir" />
+
   <node name="configuration_space_node" 
         pkg="planner" 
         type="configuration_space_node"
         respawn="false" output="screen">
-    <rosparam command="load"
-          file="$(find robots)/3_dof_robot/configs/kinematics.yaml"/>
+    <rosparam command="load" file="$(find robots)/2_dof_robot/configs/kinematics.yaml"/>
+    <rosparam param="collision_objects_dir" subst_value="True">$(arg collision_objects_dir)</rosparam>
   </node>
 
 </launch>

@@ -18,7 +18,7 @@ double getLinkLength(const robot_model::LinkModel *link_model)
 {
     auto extents = link_model->getShapeExtentsAtOrigin();
     ROS_INFO("Shape extends, %s: %f %f %f", link_model->getName().c_str(), extents.x(), extents.y(), extents.z());
-    return extents.z() / 1000;
+    return extents.z();
 }
 
 std::vector<tf::Vector3> generateTestPointsArray(
@@ -40,3 +40,41 @@ std::vector<tf::Vector3> generateTestPointsArray(
     }
     return trivial_collisions;
 }
+
+geometry_msgs::Pose transformToMsg(const tf::Transform &transform)
+{
+    geometry_msgs::Pose result_pose;
+    result_pose.position.x = transform.getOrigin().x();
+    result_pose.position.y = transform.getOrigin().y();
+    result_pose.position.z = transform.getOrigin().z();
+    result_pose.orientation.w = transform.getRotation().w();
+    result_pose.orientation.x = transform.getRotation().x();
+    result_pose.orientation.y = transform.getRotation().y();
+    result_pose.orientation.z = transform.getRotation().z();
+    return result_pose;
+}
+
+void waitForSubscribers(const ros::Publisher &publisher, size_t subscribers_number)
+{
+    while(publisher.getNumSubscribers() < subscribers_number)
+    {
+        ROS_WARN("Not enough subscribers for topic %s", publisher.getTopic().c_str());
+        sleep(3);
+    }
+}
+
+std::vector<tf::Vector3> pointsFromRawData(const double *data, const unsigned int data_count, const tf::Transform &transform)
+{
+    std::vector<tf::Vector3> result_vector;
+    for (size_t i = 0; i < data_count; ++i)
+    {
+        tf::Vector3 vector3;
+        vector3.setX(*(data + (3 * i)));
+        vector3.setY(*(data + (3 * i) + 1));
+        vector3.setZ(*(data + (3 * i) + 2));
+        vector3 = transform * vector3;
+        result_vector.push_back(vector3);
+    }
+    return result_vector;
+}
+

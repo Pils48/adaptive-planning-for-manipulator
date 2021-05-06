@@ -11,7 +11,7 @@
 #include <memory>
 #include <cmath>
 
-constexpr auto STANDARD_DISCRETIZATION = 0.0001; 
+constexpr auto STANDARD_DISCRETIZATION = 0.1; 
 constexpr auto PLOT_X_LOWER_LIMIT = -M_PI;
 constexpr auto PLOT_X_UPPER_LIMIT = M_PI;
 constexpr auto PLOT_Y_LOWER_LIMIT = -M_PI;

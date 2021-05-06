@@ -66,6 +66,7 @@ bool DiplomaIKSolver::isJointModelGroupValid(
 
     vector<const RevoluteJointModel*> revoulute_joint_models;
     transform(joint_models.begin(), joint_models.end(), back_inserter(revoulute_joint_models), &castToRevouluteModel);
+    
     //Check if two last joints have the parallel axis and the first one is perpendicular
     if (((*next(revoulute_joint_models.begin()))->getAxis() == revoulute_joint_models.back()->getAxis())
         && (revoulute_joint_models.front()->getAxis().dot(revoulute_joint_models.back()->getAxis()) == 0))
@@ -148,4 +149,5 @@ void DiplomaIKSolver::solveExpandIK(
 
         image_ply.write(outstream_binary, true);
     }
+    ROS_INFO("Image generated");
 } 
