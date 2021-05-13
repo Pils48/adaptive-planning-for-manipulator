@@ -110,30 +110,31 @@ void DiplomaIKSolver::solveExpandIK(
     }
     struct double3 { double x, y, z; }; 
     vector<double3> vertices;
-    for (size_t idx = 0; idx < trivial_collisions.size(); ++idx)
+    if (show) //creating 3D object for demo
     {
-        for (size_t i = 0; i < total_length / STANDARD_DISCRETIZATION; ++i)
+        for (size_t idx = 0; idx < trivial_collisions.size(); ++idx)
         {
-            if (i < links_length.back() / STANDARD_DISCRETIZATION)
+            for (size_t i = 0; i < total_length / STANDARD_DISCRETIZATION; ++i)
             {
-                auto joints = solveIK(trivial_collisions[idx], 
-                    {links_length.front(), *next(links_length.begin()), links_length.back() - i * STANDARD_DISCRETIZATION});
-                if (joints.size() == 2)
+                if (i < links_length.back() / STANDARD_DISCRETIZATION)
                 {
-                    vertices.push_back(double3{ joints.back()[0], joints.back()[1], joints.back()[2] }); 
-                    vertices.push_back(double3{ joints.front()[0], joints.front()[1], joints.front()[2] }); 
+                    auto joints = solveIK(trivial_collisions[idx], 
+                        {links_length.front(), *next(links_length.begin()), links_length.back() - i * STANDARD_DISCRETIZATION});
+                    if (joints.size() == 2)
+                    {
+                        vertices.push_back(double3{ joints.back()[0], joints.back()[1], joints.back()[2] }); 
+                        vertices.push_back(double3{ joints.front()[0], joints.front()[1], joints.front()[2] }); 
+                    }
+                }
+                else
+                {
+                    //TO DO: near the first link
                 }
             }
-            else
-            {
-                //TO DO: near the first link
-            }
         }
-    }
-    // Work around with ply file
-    ROS_INFO("Vertices: %lu", vertices.size());
-    if (show)
-    {
+        // Work around with ply file
+        ROS_INFO("Vertices: %lu", vertices.size());
+    
         string filename = "test.ply"; //home/user/.ros
         filebuf fb_binary;
         fb_binary.open(filename, ios::out | ios::binary);

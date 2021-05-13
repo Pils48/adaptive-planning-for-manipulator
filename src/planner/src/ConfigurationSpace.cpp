@@ -158,9 +158,9 @@ void ConfigurationSpace::loadCollisionObjects()
     //Hardcode alert!!!
     for (const auto &abs_filename : co_filenames)
     {
-        shapes::Mesh *mesh = shapes::createMeshFromResource("file://" + abs_filename, Eigen::Vector3d{5, 5, 5});//leak??
+        shapes::Mesh *mesh = shapes::createMeshFromResource("file://" + abs_filename, Eigen::Vector3d{200, 200, 200});//leak??
         shapes::ShapePtr shape_ptr(mesh);
-        tf::Transform collision_object_pose(tf::Quaternion(0, 0, 1, 0), tf::Vector3(0, 80, 150)); //Hardcode
+        tf::Transform collision_object_pose(tf::Quaternion(0, 0, 1, 0), tf::Vector3(0, 150, 150)); //Hardcode
         CollisionObject collision_object {"first_object", mesh, collision_object_pose}; //Hardcode
         addCollision(vector<CollisionObject>{collision_object});
         _collision_objects.emplace_back(collision_object);
