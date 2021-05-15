@@ -13,7 +13,7 @@ if [[ $1 = "--nvidia" ]] || [[ $1 = "-n" ]]
                 -v "/tmp/.X11-unix:/tmp/.X11-unix:rw" \
                 -e XAUTHORITY \
                 -v /dev:/dev \
-                -v $ROOT_DIR \
+                -v $ROOT_DIR/src:/src \
                --net=host \
                --privileged \
                --name diploma-project diploma-project-img

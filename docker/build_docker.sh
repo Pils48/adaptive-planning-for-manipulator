@@ -9,7 +9,7 @@ if [[ $1 = "--nvidia" ]] || [[ $1 = "-n" ]]
   then
     docker build -t diploma-project-img -f $ROOT_DIR/docker/Dockerfile $ROOT_DIR \
                                   --network=host \
-                                  --build-arg from=nvidia/opengl:1.2-glvnd-runtime-ubuntu16.04
+                                  --build-arg from=nvidia/opengl:1.2-glvnd-runtime-ubuntu18.04
 
 else
     echo "[!] If you use nvidia gpu, please rebuild with -n or --nvidia argument"
