@@ -9,6 +9,7 @@
 //Internal
 #include "ConfigurationSpace.h"
 #include "Solver.h"
+#include "planner/ProcessImage.h"
 
 //boost
 #include <boost/filesystem.hpp>
@@ -23,31 +24,9 @@ ConfigurationSpace::ConfigurationSpace
     string robot_description,
     vector<tf::Vector3> trivial_collisions
 )
-    : _robot_model_loader(robot_description)
-    , _robot_model(_robot_model_loader.getModel())
+    : ConfigurationSpace(robot_description)
 {
-    ROS_INFO("Building configuration space...");
-    ROS_INFO("Model %s loaded", _robot_model->getName().c_str());
-    _space_ready_pub = _nh.advertise<std_msgs::Bool>("space_ready_topic", 10);
-    waitForSubscribers(_space_ready_pub, 1);
-    _planning_scene_diff_pub = _nh.advertise<moveit_msgs::PlanningScene>("planning_scene", 100);
-    waitForSubscribers(_planning_scene_diff_pub, 1);
-
-    if (_nh.hasParam("/configuration_space_node/collision_objects_dir"))
-    {
-        _nh.param("/configuration_space_node/collision_objects_dir", _collision_objects_dir, string{""});
-    }
-    else
-    {
-        ROS_WARN("Unspesified directory for collision objects");
-    }
-    ROS_INFO("Set directory for collision objects: %s", _collision_objects_dir.c_str());
-    loadCollisionObjects();
     addCollision(trivial_collisions);
-
-    std_msgs::Bool is_ready;
-    is_ready.data = true; 
-    _space_ready_pub.publish(is_ready);
 }
 
 ConfigurationSpace::ConfigurationSpace
@@ -59,9 +38,10 @@ ConfigurationSpace::ConfigurationSpace
 {
     ROS_INFO("Building configuration space...");
     ROS_INFO("Model %s loaded", _robot_model->getName().c_str());
-    _space_ready_pub = _nh.advertise<std_msgs::Bool>("space_ready_topic", 10);
-    waitForSubscribers(_space_ready_pub, 1);
+    _process_image_client = _nh.serviceClient<planner::ProcessImage>("process_image");
+    ROS_INFO("Process_image_client has been created");
     _planning_scene_diff_pub = _nh.advertise<moveit_msgs::PlanningScene>("planning_scene", 100);
+    ROS_INFO("Planning_scene_diff_pub has been created");
     waitForSubscribers(_planning_scene_diff_pub, 1);
 
     if (_nh.hasParam("/configuration_space_node/collision_objects_dir"))
@@ -75,9 +55,6 @@ ConfigurationSpace::ConfigurationSpace
     ROS_INFO("Set directory for collision objects: %s", _collision_objects_dir.c_str());
     loadCollisionObjects();
 
-    std_msgs::Bool is_ready;
-    is_ready.data = true; 
-    _space_ready_pub.publish(is_ready);
 }
 
 void ConfigurationSpace::spin()
@@ -94,13 +71,25 @@ void ConfigurationSpace::addCollision(const vector<tf::Vector3> &trivial_collisi
     _trivial_collisions.insert(_trivial_collisions.end(), trivial_collisions.begin(), trivial_collisions.end());
     robot_state::RobotStatePtr kinematic_state(new robot_state::RobotState(_robot_model));
     auto joint_model_group = kinematic_state->getJointModelGroup("3_dof_manipulator");
-    ROS_INFO("%s joint model group loaded", joint_model_group->getName().c_str());
+    ROS_INFO("%s joint model group has been loaded", joint_model_group->getName().c_str());
 
     auto solver = createSolver(*joint_model_group);
     auto chain = solver->getSimplifiedLinksChain(*joint_model_group);
     vector<double> links_length;
     transform(chain.begin(), chain.end(), back_inserter(links_length), &getLinkLength);
     solver->solveExpandIK(trivial_collisions, links_length, true);
+
+    planner::ProcessImage srv;
+    srv.request.filename = "images/test_plot.jpg"; //TO DO: do not rewrite image
+    if (_process_image_client.call(srv))
+    {
+        ROS_INFO("Image %s has been successfully processed", srv.request.filename.c_str());
+    }
+    else
+    {
+        ROS_ERROR("Failed to call service process_image");
+        throw std::runtime_error("Failed to call service process_image");
+    }
 }
 
 void ConfigurationSpace::addCollision(

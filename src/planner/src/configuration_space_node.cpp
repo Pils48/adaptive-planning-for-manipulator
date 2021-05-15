@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
         0.12, 0.16, 0.01,
         0.12, 0.16, 0.01
     );
-    ConfigurationSpace configuration_space("robot_description");
+    ConfigurationSpace configuration_space("robot_description", trivial_collisions);
     configuration_space.spin();
     return 0;
 }

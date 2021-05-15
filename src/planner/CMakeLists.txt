@@ -21,6 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_ros
   tf2_eigen
   tf2_geometry_msgs
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -67,11 +68,12 @@ find_package(PythonLibs 2.7)
 # )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+  DIRECTORY 
+    srv
+  FILES
+    ProcessImage.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -81,10 +83,10 @@ find_package(PythonLibs 2.7)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -125,12 +127,14 @@ catkin_package(
     moveit_ros_planning_interface
     interactive_markers
     tf2_geometry_msgs
+    message_runtime
+    std_msgs
   DEPENDS
     EIGEN3
 )
 
-catkin_install_python(PROGRAMS scripts/radial.py scripts/planner.py
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+catkin_install_python(PROGRAMS scripts/Radial.py scripts/PlannerBase.py
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 ###########
 ## Build ##
@@ -154,7 +158,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(configuration_space_node src/planner_node.cpp src/ConfigurationSpace.cpp src/TrivialIK.cpp 
+add_executable(configuration_space_node src/configuration_space_node.cpp src/ConfigurationSpace.cpp src/TrivialIK.cpp 
   src/Solver.cpp src/PlannerUtils.cpp src/DiplomaIKSolver.cpp)
 
 ## Rename C++ executable without prefix

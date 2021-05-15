@@ -41,7 +41,7 @@ public:
 
 private:
     ros::NodeHandle _nh;
-    ros::Publisher _space_ready_pub;
+    ros::ServiceClient _process_image_client;
     ros::Publisher _planning_scene_diff_pub;
     robot_model_loader::RobotModelLoader _robot_model_loader;
     moveit::core::RobotModelPtr _robot_model;
