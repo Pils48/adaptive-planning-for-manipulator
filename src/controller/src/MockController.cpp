@@ -74,16 +74,49 @@ void MockController::animationCallback(const std_msgs::Float64MultiArray &trajec
         initial_state = form_joints_vector(i);
         final_state = form_joints_vector(i + joints_number);
         auto path = interpolate(initial_state, final_state);
+        std::vector<robot_state::RobotStatePtr> trajectory;
         for (const auto &waypoint : path)
         {
             ROS_DEBUG("Waypoint: {%f, %f}", waypoint[0], waypoint[1]);
            _kinematic_state.setVariablePositions(waypoint);
            _kinematic_state.update(true);
-           _visual_tools.publishRobotState(_kinematic_state, rvt::colors::BLUE);
-           std::this_thread::sleep_for(std::chrono::milliseconds(10));
+           trajectory.push_back(std::make_shared<robot_state::RobotState>(_kinematic_state)); //Don't really understand some aspects of call
+        //    _visual_tools.publishRobotState(_kinematic_state, rvt::colors::BLUE);
+        //    std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
+        _visual_tools.publishTrajectoryPath(trajectory, joint_model_group_ptr, 10, true);
     }
 }
+
+// void MockController::test()
+// {
+//     _visual_tools.deleteAllMarkers();
+//     // _visual_tools.loadTrajectoryPub("display_planned_path");
+//     _visual_tools.loadSharedRobotState();
+//     _visual_tools.loadTrajectoryPub();
+//     auto jmg = _kinematic_state.getJointModelGroup("3_dof_manipulator");
+//     auto state_1 = _kinematic_state;
+//     auto state_2 = _kinematic_state;
+//     auto state_3 = _kinematic_state;
+//     std::vector<robot_state::RobotStatePtr> trajectory;
+//     auto joints_1 = std::vector<double>{-0.85, -0.26, -1};
+//     auto joints_2 = std::vector<double>{0, 0, 0};
+//     auto joints_3 = std::vector<double>{0.92, -0.17, -0.63};
+//     _kinematic_state.setVariablePositions(joints_1);
+//     _kinematic_state.update(true);
+//     trajectory.push_back(std::make_shared<robot_state::RobotState>(_kinematic_state)); 
+//     _kinematic_state.setVariablePositions(joints_2);
+//     _kinematic_state.update(true);
+//     trajectory.push_back(std::make_shared<robot_state::RobotState>(_kinematic_state));
+//     _kinematic_state.setVariablePositions(joints_3);
+//     _kinematic_state.update(true);
+//     trajectory.push_back(std::make_shared<robot_state::RobotState>(_kinematic_state));
+//     // trajectory.push_back(std::make_shared<robot_state::RobotState>(state_1));
+//     // trajectory.push_back(std::make_shared<robot_state::RobotState>(state_2));
+//     // trajectory.push_back(std::make_shared<robot_state::RobotState>(state_3));
+//     _visual_tools.publishTrajectoryPath(trajectory, jmg, 10, true);
+//     // ros::spinOnce();
+// }
 
 void MockController::spin()
 {

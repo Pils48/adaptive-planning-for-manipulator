@@ -12,6 +12,7 @@ int main(int argc, char *argv[])
 {   
     ros::init(argc, argv, "controller_node");
     MockController mock_controller;
+    // mock_controller.test();
     mock_controller.spin();
     return 0;
 }

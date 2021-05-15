@@ -33,6 +33,8 @@ public:
     ~MockController() = default;
 
     void animationCallback(const std_msgs::Float64MultiArray &trajectory_states);
+    
+    // void test();
 
     void spin();
 };
