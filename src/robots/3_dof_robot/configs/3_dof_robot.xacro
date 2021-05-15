@@ -7,13 +7,13 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-          <mesh filename="file:///home/nikita/dev/adaptive-planning-for-manipulator/src/robots/3_dof_robot/meshes/base_link.stl" scale="0.3 0.3 0.3"/>
+          <mesh filename="package://robots/3_dof_robot/meshes/base_link.stl" scale="0.3 0.3 0.3"/>
       </geometry>
     </visual>
     <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="file:///home/nikita/dev/adaptive-planning-for-manipulator/src/robots/3_dof_robot/meshes/base_link.stl" scale="0.3 0.3 0.3"/>
+          <mesh filename="package://robots/3_dof_robot/meshes/base_link.stl" scale="0.3 0.3 0.3"/>
         </geometry>   
     </collision>
   </link>
@@ -30,13 +30,13 @@
     <visual>
       <origin xyz="0 0 -3.5" rpy="0 0 0"/>
       <geometry>
-          <mesh filename="file:///home/nikita/dev/adaptive-planning-for-manipulator/src/robots/3_dof_robot/meshes/link_1.stl" scale="0.3 0.3 0.3"/>
+          <mesh filename="package://robots/3_dof_robot/meshes/link_1.stl" scale="0.3 0.3 0.3"/>
       </geometry>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="file:///home/nikita/dev/adaptive-planning-for-manipulator/src/robots/3_dof_robot/meshes/link_1.stl" scale="0.3 0.3 0.3"/>
+        <mesh filename="package://robots/3_dof_robot/meshes/link_1.stl" scale="0.3 0.3 0.3"/>
       </geometry>
     </collision>
   </link>
@@ -53,13 +53,13 @@
     <visual>
       <origin xyz="0 0 56" rpy="0 0 0"/>
       <geometry>
-          <mesh filename="file:///home/nikita/dev/adaptive-planning-for-manipulator/src/robots/3_dof_robot/meshes/link_2.stl" scale="0.3 0.3 0.3"/>
+          <mesh filename="package://robots/3_dof_robot/meshes/link_2.stl" scale="0.3 0.3 0.3"/>
       </geometry>
     </visual>
     <collision>
       <origin xyz="0 0 56" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="file:///home/nikita/dev/adaptive-planning-for-manipulator/src/robots/3_dof_robot/meshes/link_2.stl" scale="0.3 0.3 0.3"/>
+        <mesh filename="package://robots/3_dof_robot/meshes/link_2.stl" scale="0.3 0.3 0.3"/>
       </geometry>
     </collision>
   </link>
